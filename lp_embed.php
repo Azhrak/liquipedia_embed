@@ -390,7 +390,6 @@ function parse_brackets($html) {
 
     if (preg_match('/div class="bracket-column"/', $html_slice)) { // New bracket format, with DIVs
 
-      $pattern = '/bracket-cell-[^>]+>[^<]*(?:<[^>]+>[^<]*){7}/i';
       $pattern = '/bracket-cell-[^>]+>[\s\S]*?bracket-score[^>]+>[^<]*/i';
       preg_match_all($pattern, $html_slice, $matches);
       // print_r($matches);die;
