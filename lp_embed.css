@@ -1,0 +1,226 @@
+body, html {
+margin:0;
+padding:0;
+font-size: 11px;
+font-family: Verdana;
+}
+/* Brackets */
+.forum_bracket, .forum_bracket_big {
+clear: both;
+width: 700px;
+}
+.forum_bracket_big {
+overflow-x: scroll;
+width: 870px;
+}
+.forum_bracket_best_of td {
+padding-right: 0.5em;
+}
+.forum_brackets_view {
+float: left;
+}
+.forum_bracket_ro_links {
+text-align: center;
+padding: 1em 0;
+clear: both;
+}
+.forum_bracket_round {
+float: left;
+width: 180px;
+line-height: 21px;
+}
+.forum_bracket_round_last {
+width: 160px !important;
+}
+.forum_bracket_line_join {
+border: 2px solid black;
+border-left: none;
+width: 7px;
+float: right;
+margin-right: 8px;
+}
+.forum_bracket_line_vertical {
+border-top: 2px solid black;
+width: 6px;
+float: right;
+height: 1px;
+}
+.forum_bracket_round_name {
+height: 2em;
+text-align: center;
+margin-top: 0.5em;
+font-weight: bold;
+padding-right: 20px;
+}
+.forum_bracket_round_winner {
+width: 130px;
+float: left;
+line-height: 21px;
+}
+.forum_bracket_winner {
+font-weight: bold;
+}
+.forum_bracket_empty_name {
+color: #AAA;
+}
+.forum_bracket_score {
+float: right;
+}
+.forum_bracket_round .forum_bracket_odd .forum_bracket_contestant {
+background: #EED;
+}
+.forum_bracket_round .forum_bracket_even .forum_bracket_contestant {
+background: #DEE;
+}
+.forum_bracket_match {
+width: 160px;
+}
+.forum_bracket_round .forum_bracket_match .forum_bracket_contestant {
+color: #000;
+-moz-border-radius: 5px 0 0px 5px;
+-khtml-border-radius:  5px 0 0px 5px;
+-webkit-border-radius:  5px 0 0px 5px;
+border-radius:  5px 0 0px 5px;
+height: 24px;
+padding: 5px 0 0 5px;
+margin-bottom: 20px;
+}
+.forum_bracket_match .forum_bracket_contestant:nth-child(1) {
+margin-bottom: 2px;
+}
+.forum_bracket_round .forum_bracket_match .forum_bracket_name {
+width: 135px;
+height: 29px;
+display: block;
+overflow: hidden;
+word-break: break-all;
+}
+.forum_bracket_round .forum_bracket_match .forum_bracket_score {
+width: 20px;
+height: 100%;
+padding-top: 5px;
+margin-top: -5px;
+text-align: center;
+font-weight: bold;
+background: #008ebf;
+color: #FFF;
+}
+.forum_bracket_match_winner .forum_bracket_score {
+background: #74a333 !important;
+}
+.forum_bracket_round_1 .forum_bracket_match {
+padding: 0px 0px;
+}
+.forum_bracket_round_2 .forum_bracket_match {
+padding: 40px 0px;
+}
+.forum_bracket_round_3 .forum_bracket_match {
+padding: 120px 0px;
+}
+.forum_bracket_round_4 .forum_bracket_match {
+padding: 280px 0px;
+}
+.forum_bracket_round_5 .forum_bracket_match {
+padding: 60px 0px;
+}
+.forum_bracket_round_last .forum_bracket_match {
+padding-bottom: 0;
+}
+.forum_bracket_bronze_3 .forum_bracket_match,
+.forum_bracket_bronze_4 .forum_bracket_match,
+.forum_bracket_bronze_5 .forum_bracket_match {
+padding: 0;
+}
+.forum_bracket_bronze_3 {
+margin-top: 0px;
+}
+.forum_bracket_bronze_4 {
+margin-top: 38px;
+}
+.forum_bracket_bronze_5 {
+margin-top: 198px;
+}
+.forum_bracket_round .forum_bracket_match:last-child {
+padding-bottom: 0px;
+}
+.forum_bracket_round_1 .forum_bracket_line_join {
+height: 79px;
+margin-top: -51px;
+}
+.forum_bracket_round_2 .forum_bracket_line_join {
+height: 158px;
+margin-top: -89px;
+}
+.forum_bracket_round_3 .forum_bracket_line_join {
+height: 318px;
+margin-top: -169px;
+}
+.forum_bracket_round_4 .forum_bracket_line_join {
+height: 638px;
+margin-top: -330px;
+}
+.forum_bracket_line_vertical {
+margin: -10px -15px 0 0;
+}
+/* Groups */
+a {
+color: #0606B7;
+}
+table {
+border-collapse: collapse;
+}
+td {
+padding: 0;
+}
+div.groups {
+clear: both;
+width: 680px;
+}
+div.group {
+width: 200px;
+float: left;
+margin: 15px 30px 10px 0px;
+}
+div.group.right {
+margin-right: 0px;
+}
+table.group_players, table.group_matches {
+width: 100%;
+}
+tr.group_player td {
+padding: 1px 0;
+}
+th.group_name {
+border-bottom: 1px solid #666;
+text-align: left;
+}
+span.group_time {
+font-weight: normal;
+float: right;
+}
+td.first_player_row {
+padding-top: 3px !important;
+}
+td.player_match_score, td.player_map_score {
+width: 26px;
+text-align: center;
+}
+td.matches_name.left {
+text-align: right;
+}
+td.matches_name {
+width: 85px;
+}
+td.matches_score {
+width: 15px;
+text-align: center;
+}
+.group_row {
+clear: both;
+}
+td.player_position {
+width: 10px;
+}
+.show_button {
+text-decoration: none;
+}
