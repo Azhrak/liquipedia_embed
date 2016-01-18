@@ -121,7 +121,13 @@ padding: 120px 0px;
 padding: 280px 0px;
 }
 .forum_bracket_round_5 .forum_bracket_match {
-padding: 60px 0px;
+padding: 600px 0px;
+}
+.forum_bracket_round_6.forum_bracket_match {
+padding: 1240px 0px;
+}
+.forum_bracket_round_7.forum_bracket_match {
+padding: 2520px 0px;
 }
 .forum_bracket_round_last .forum_bracket_match {
 padding-bottom: 0;
