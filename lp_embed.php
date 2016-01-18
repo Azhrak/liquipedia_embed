@@ -141,7 +141,7 @@ $round_count = 1;
 $prev_round = null;
 ?>
 <?php if (!empty($bracket)) : ?>
-  <div class="forum_bracket">
+  <div class="forum_bracket <?php echo 'forum_bracket_size_'.count($bracket['rounds']);?>">
   <?php foreach ($bracket['rounds'] as $round => $matches) : ?>
     <?php if (!empty($ro_start) && $round != 'bronze' && $ro_start < $round) continue;?>
     <?php if (!empty($ro_end) && $round != 'bronze' && $round < $ro_end) continue;?>

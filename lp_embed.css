@@ -5,13 +5,29 @@ font-size: 11px;
 font-family: Verdana;
 }
 /* Brackets */
-.forum_bracket, .forum_bracket_big {
+.forum_bracket {
 clear: both;
+}
+.forum_bracket_size_1 {
+width: 160px; /* (X * 180) - 20 */
+}
+.forum_bracket_size_2{
+width: 340px;
+}
+.forum_bracket_size_3 {
+width: 520px;
+}
+.forum_bracket_size_4 {
 width: 700px;
 }
-.forum_bracket_big {
-overflow-x: scroll;
-width: 870px;
+.forum_bracket_size_5 {
+width: 880px;
+}
+.forum_bracket_size_6 {
+width: 1060px;
+}
+.forum_bracket_size_7 {
+width: 1240px;
 }
 .forum_bracket_best_of td {
 padding-right: 0.5em;
