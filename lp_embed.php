@@ -133,7 +133,33 @@ if ($mode == 'bracket') {
 <html>
 <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="lp_embed.css" type="text/css">
+  <link rel="stylesheet" href="lp_embed.css<?php echo '?'.@filemtime('lp_embed.css')?>" type="text/css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript">
+    //Drag scroll ...
+    var clicked = false, clickY, clickX;
+    $(document).on({
+        'mousemove': function(e) {
+            clicked && updateScrollPos(e);
+        },
+        'mousedown': function(e) {
+            clicked = true;
+            clickY = e.pageY;
+            clickX = e.pageX;
+        },
+        'mouseup': function() {
+            clicked = false;
+            $('html').css('cursor', 'auto');
+        }
+    });
+
+    var updateScrollPos = function(e) {
+        $('html').css('cursor', 'move');
+        $(window).scrollTop($(window).scrollTop() + (clickY - e.pageY));
+        $(window).scrollLeft($(window).scrollLeft() + (clickX - e.pageX));
+    }
+    // ... Drag scroll
+  </script>
 </head>
 <body>
 <?php
@@ -229,7 +255,8 @@ elseif ($mode == 'group') {
 <html>
 <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="lp_embed.css" type="text/css">
+  <link rel="stylesheet" href="lp_embed.css<?php echo '?'.@filemtime('lp_embed.css')?>" type="text/css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
   <script type="text/javascript">
     function toggle(button, id) {
       var e = document.getElementById(id);
