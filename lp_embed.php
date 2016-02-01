@@ -611,7 +611,7 @@ function parse_brackets($html) {
 
 
 function parse_groups($html) {
-  if (!preg_match_all('/<table class="(?:prettytable|wikitable)(?: grouptable)?" style="width: 300px;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
+  if (!preg_match_all('/<table class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?" style="width: 300px;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
     // echo "No groups found.";
     return array();
   }
