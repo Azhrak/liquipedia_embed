@@ -655,7 +655,7 @@ function parse_groups($html) {
         }
       }
       $html_slice = substr($html, $offset_start, $offset_end-$offset_start);
-      if (preg_match('/<\/table>[\s]*<\/div>/', $html_slice, $hit, PREG_OFFSET_CAPTURE)) {
+      if (preg_match('/<\/table>[\s]*<\/div>[\s]*<\/?div/', $html_slice, $hit, PREG_OFFSET_CAPTURE)) {
         $offset_end = (isset($hit[0][1])) ? $hit[0][1] : $offset_end;
         $html_slice = substr($html_slice, 0, $offset_end);
       }
