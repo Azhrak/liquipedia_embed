@@ -22,7 +22,7 @@ $use_localtime = (isset($_GET['localtime']) && $_GET['localtime'] == 1);
 
 $title = '';
 $page = '';
-if (preg_match('/(?:http:\/\/)?wiki\.teamliquid\.net\/starcraft2\/([^\?&]+)/', $url, $matches)) {
+if (preg_match('/(?:http:\/\/)?wiki\.teamliquid\.net\/starcraft2\/([^\?]+)/', $url, $matches)) {
   $page = $matches[1];
   $title = preg_replace('/[^\w\d_\.-]/', '_', $page);
 }
@@ -387,7 +387,7 @@ elseif ($mode == 'group') {
 <?php
 function parse_brackets($html) {
 
-  if (!preg_match_all('/class="bracket"/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
+  if (!preg_match_all('/class="bracket[ "]/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
     if (!preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
       // echo "Error: No bracket found.";
       return array();
@@ -626,7 +626,7 @@ function parse_groups($html) {
   }
 
   // Offset end to Playoffs stage
-  if (!preg_match('/class="bracket"/', $html, $hit, PREG_OFFSET_CAPTURE, 10000)) {
+  if (!preg_match('/class="bracket[ "]/', $html, $hit, PREG_OFFSET_CAPTURE, 10000)) {
     preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals/', $html, $hit, PREG_OFFSET_CAPTURE, 10000);
   }
   $offset_end = (isset($hit[0][1])) ? $hit[0][1] : strlen($html);
