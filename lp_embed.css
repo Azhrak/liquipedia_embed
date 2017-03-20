@@ -252,3 +252,14 @@ width: 10px;
 .show_button {
 text-decoration: none;
 }
+table.group_crosstable td, table.group_crosstable th {
+padding: 0 5px; 
+text-align: center;
+min-width: 30px;
+}
+table.group_crosstable thead th {
+text-align: left;
+}
+table.group_crosstable tbody tr th:nth-child(1) {
+text-align: right;
+}

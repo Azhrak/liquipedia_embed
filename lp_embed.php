@@ -373,6 +373,42 @@ elseif ($mode == 'group') {
           </tbody>
         </table>
       <?php endif; ?>
+
+      <?php if (!empty($group['crosstable']) && !empty($group['crosstable']['table'])) : ?>
+        <table class="group_crosstable">
+          <thead>
+            <tr>
+              <th colspan="<?php echo count($group['crosstable']['table']) ?>">
+                <a class="show_button" href="javascript:toggle(this, 'crosstable_<?php echo $id ?>')"><?php echo SHOW_GROUP_MATCHES ?></a>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="crosstable_<?php echo $id ?>" <?php if (!$showmatches) echo 'style="display:none"';?>>
+          <?php for ($row=0; $row<count($group['crosstable']['table']); $row++) : ?>
+            <tr>
+            <?php for ($col=0; $col<count($group['crosstable']['table']); $col++) : ?>
+              <?php if ($col == 0 || $row == count($group['crosstable']['table'])-1) : ?>
+                <th class="crosstable_name">
+                  <?php $player = $group['crosstable']['table'][$row][$col]; ?>
+                  <?php if (!empty($player) && !empty($player['name'])) : ?>
+                    <?php echo $player['name'] ?>
+                  <?php endif; ?>
+                </th>
+              <?php else : ?>
+                <td class="crosstable_score">
+                  <?php $match = $group['crosstable']['table'][$row][$col]; ?>
+                  <?php if (!empty($match)) : ?>
+                    <?php echo $match['score1']; ?> - <?php echo $match['score2']; ?>
+                  <?php endif; ?>
+                </td>
+              <?php endif; ?>
+            <?php endfor; ?>
+            </tr>
+          <?php endfor; ?>
+          </tbody>
+        </table>
+      <?php endif; ?>
+
       </div>
     <?php endforeach; ?>
     </div>
@@ -611,7 +647,7 @@ function parse_brackets($html) {
 
 
 function parse_groups($html) {
-  if (!preg_match_all('/<table class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?" style="width: 3\d\dpx;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
+  if (!preg_match_all('/<table class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?" style="width: \d\d\dpx;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
     // echo "No groups found.";
     return array();
   }
@@ -632,7 +668,7 @@ function parse_groups($html) {
   $offset_end = (isset($hit[0][1])) ? $hit[0][1] : strlen($html);
 
   $stage_offsets = array();
-  if (preg_match_all('/id="[^"]+">\s*Group Stage \D*\d/i', $html, $hits, PREG_OFFSET_CAPTURE, 10000)) {
+  if (preg_match_all('/id="[^"]+">\s*Group Stage \D*\d|<h2><[^>]+?id="[^"]+">[^<]*?Stage/i', $html, $hits, PREG_OFFSET_CAPTURE, 10000)) {
     if (isset($hits[0][0][1])) {
       foreach ($hits[0] as $hit) { $stage_offsets[] = $hit[1]; }
     }
@@ -669,7 +705,7 @@ function parse_groups($html) {
     preg_match('/<th colspan="\d">.*Group ([^<]+)\s*/', $html_slice, $hit);
     $group_name = (isset($hit[1])) ? trim($hit[1]) : $group_name;
 
-    preg_match('/<td colspan="\d" [^>]+>[\s]*<b>([^<]+)<[^>]+UTC(.\d)/', $html_slice, $hit);
+    preg_match('/<td colspan="\d" [^>]+>[\s]*<b>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
     if (isset($hit[1])) {
       $group_time = trim($hit[1]);
       $group_time = $group_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $group_time));
@@ -820,13 +856,261 @@ function parse_groups($html) {
       'players' => $players,
       'countries' => $countries,
       'player_names' => $player_names,
-      'matches' => $matches
+      'matches' => $matches,
+      'crosstable' => null
     );
     // print_r($group);die;
 
     $groups[$stage][] = $group;
   }
+
+  if (!empty($groups)) {
+    // Read crosstables if exists, and assign to groups in linear order
+    $crosstables = parse_crosstables($html);
+    if (!empty($crosstables)) {
+      for ($i=0; $i<count($groups); $i++) {
+        if (empty($crosstables)) break;
+        for ($j=0; $j<count($groups[$i]); $j++) {
+          if (empty($crosstables)) break;
+          $groups[$i][$j]['crosstable'] = array_shift($crosstables);
+          $groups[$i][$j]['time'] = $groups[$i][$j]['crosstable']['time'];
+          $groups[$i][$j]['time_local'] = $groups[$i][$j]['crosstable']['time_local'];
+        }
+      }
+    }
+  }
+
   return $groups;
+}
+
+
+function parse_crosstables($html) {
+  if (!preg_match_all('/<table class="[^"]*?crosstable/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
+    return array();
+  }
+
+  $offsets = array();
+  if (isset($matches[0][0][1])) {
+    foreach ($matches[0] as $match) { $offsets[] = $match[1]; }
+  }
+  else {
+    $offsets[] = $matches[0][1];
+  }
+
+  // Offset end to Playoffs stage
+  if (!preg_match('/class="bracket[ "]/', $html, $hit, PREG_OFFSET_CAPTURE, 10000)) {
+    preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals|class="[^"]*?bracket-wrapper/', $html, $hit, PREG_OFFSET_CAPTURE, 10000);
+  }
+  $offset_end = (isset($hit[0][1])) ? $hit[0][1] : strlen($html);
+
+  for ($k=0; $k<count($offsets); $k++) {
+
+    $offset_start = $offsets[$k];
+    if (isset($offsets[$k+1])) {
+      $html_slice = substr($html, $offset_start, $offsets[$k+1]-$offset_start);
+    }
+    else {
+      if ($offset_end < $offset_start) {
+        if (preg_match('/class="bracket"/', $html, $hit, PREG_OFFSET_CAPTURE, $offset_start)) {
+          $offset_end = (isset($hit[0][1])) ? $hit[0][1] : strlen($html);
+        }
+        else {
+          $offset_end = strlen($html);
+        }
+      }
+      $html_slice = substr($html, $offset_start, $offset_end-$offset_start);
+    }
+
+    if (preg_match('/<\/table>[\s]*<\/div>/', $html_slice, $hit, PREG_OFFSET_CAPTURE)) {
+      $offset_end = (isset($hit[0][1])) ? $hit[0][1] : $offset_end;
+      $html_slice = substr($html_slice, 0, $offset_end + strlen('<\/table>'));
+    }
+
+    $players = $player_names = $countries = $matches = $printtable = $crosstable = array();
+    $match_time = $match_time_local = null;
+    $crosstable_time = $crosstable_time_local = null;
+    $crosstable_finished = true;
+
+    // Get just the last row of table, which includes the players
+    $html_last_row = '';
+    if (preg_match_all('/<tr[^>]*>/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+      $html_last_row = substr($html_slice, $hits[0][count($hits[0])-1][1]);
+    }
+
+    // Read each player
+    if (preg_match_all('/<th[^>]*>.+?\/th>/', $html_last_row, $hits, PREG_OFFSET_CAPTURE)) {
+      $offsets_tmp = array();
+      foreach ($hits[0] as $hit) { $offsets_tmp[] = $hit[1]; }
+
+      for ($j=0; $j<count($offsets_tmp); $j++) {
+        $offset_start = $offsets_tmp[$j];
+        if (isset($offsets_tmp[$j+1])) {
+          $html_slice_tmp = substr($html_last_row, $offset_start, $offsets_tmp[$j+1]-$offset_start);
+        }
+        else {
+          $html_slice_tmp = substr($html_last_row, $offset_start);
+        }
+
+        $country = $country_short = $race = $name = null;
+        $offset = 0;
+
+        if (set_value($country, $offset, '/Category:([^"]+)"/', $html_slice_tmp)) {
+          set_value($country_short, $offset, '/src="[^"]+?\/([\w]{2})\.\w{3}"/', $html_slice_tmp);
+          $country_short = strtolower($country_short);
+          if ($country_short == 'uk') $country_short = 'gb';
+        }
+
+        set_value($race, $offset, '/title="(Protoss|Terran|Zerg|Random)"/', $html_slice_tmp);
+
+        set_value($name, $offset, '/title="[^"]+"[^>]*>([^<]+)/', $html_slice_tmp);
+
+        if (!empty($name)) {
+          $player = array(
+            'name' => trim($name),
+            'race' => trim($race),
+            'country' => trim($country),
+            'country_short' => trim($country_short)
+          );
+
+          $players[] = $player;
+        }
+      }
+
+      foreach ($players as $p) {
+        $countries[] = strtolower($p['country']);
+        $player_names[] = strtolower($p['name']);
+      }
+    }
+
+    //Initialize print table
+    for ($i=0; $i<count($players); $i++) {
+      $printtable[$i][0] = $players[$i];
+      $printtable[count($players)][$i+1] = $players[$i];
+      for ($j=1; $j<=count($players); $j++) {
+        if ($i+1 == $j) {
+          $printtable[$i][$j] = array();
+        }
+        else {
+          $printtable[$i][$j] = array('score1' => 0, 'score2' => 0); //populate these with matches later
+        }
+      }
+    }
+    $printtable[count($players)][0] = array();
+
+
+    // Read all matches
+    if (preg_match_all('/<td class="[^"]+?bracket-game/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+      $offsets_tmp = array();
+      foreach ($hits[0] as $hit) { $offsets_tmp[] = $hit[1]; }
+
+      for ($j=0; $j<count($offsets_tmp); $j++) {
+        $offset_start = $offsets_tmp[$j];
+        if (isset($offsets_tmp[$j+1])) {
+          $html_slice_tmp = substr($html_slice, $offset_start, $offsets_tmp[$j+1]-$offset_start);
+        }
+        else {
+          $html_slice_tmp = substr($html_slice, $offset_start);
+        }
+
+        $cell_end = strpos($html_slice_tmp, '</td>');
+        if ($cell_end !== false) {
+          $html_slice_tmp = substr($html_slice_tmp, 0, $cell_end);
+        }
+
+        $winner = $name1 = $name2 = $id1 = $id2 = $score1 = $score2 = $date = null;
+        $offset = 0;
+
+        set_value($score1, $offset, '/>\s*(\d)/', $html_slice_tmp);
+
+        set_value($score2, $offset, '/-(\d)\s*</', $html_slice_tmp);
+
+        if (set_value($name1, $offset, '/<div class="bracket-popup-header-left">([^<]*)/', $html_slice_tmp)) {
+          $name1 = trim($name1);
+          $name1 = str_replace(array('&nbsp;','&#160;'), '', $name1);
+          if (empty($name1)) {
+            $name1 = EMPTY_NAME;
+          }
+          else if ($name1 != 'TBD') {
+            foreach ($players as $i => $p) { if ($p['name'] == $name1) { $id1 = $i; break; } }
+          }
+        }
+
+        if (set_value($name2, $offset, '/<div class="bracket-popup-header-right">.+?<\/a>([^<]+)/', $html_slice_tmp)) {
+          $name2 = trim($name2);
+          $name2 = str_replace(array('&nbsp;','&#160;'), '', $name2);
+          if (empty($name2)) {
+            $name2 = EMPTY_NAME;
+          }
+          else if ($name2 != 'TBD') {
+            foreach ($players as $i => $p) { if ($p['name'] == $name2) { $id2 = $i; break; } }
+          }
+        }
+
+        preg_match('/class="datetime">([^<]+).*?UTC(.\d+)/', $html_slice_tmp, $hit);
+        if (isset($hit[1])) {
+          $match_time = trim($hit[1]);
+          $match_time = str_replace(' - ', ', ', $match_time);
+          $match_time = $match_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $match_time));
+          $utc_diff = (date("I")) ? TIMEZONE+1 - $hit[2] : TIMEZONE - $hit[2];
+          $match_time = strtotime($utc_diff . " hour", $match_time);
+
+          if (empty($crosstable_time) || $match_time < $crosstable_time) {
+            $crosstable_time = $match_time;
+            $crosstable_time_local = $match_time_local;
+          }
+        }
+
+        if (0 < $score1 || 0 < $score2) {
+          $winner = ($score1 < $score2) ? 1 : 0;
+        }
+
+        if ($crosstable_finished && strlen($winner) == 0) $crosstable_finished = false;
+
+        $match = array(
+          'player1' => $id1,
+          'player2' => $id2,
+          'score1' => $score1,
+          'score2' => $score2,
+          'winner' => $winner,
+          'time' => $match_time,
+          'time_local' => $match_time_local
+        );
+        // print_r($match);die;
+
+        //Check if match already exists
+        $match_exists = false;
+        if (!empty($matches)) {
+          foreach ($matches as $m) {
+            if (($m['player1'] == $match['player1'] && $m['player2'] == $match['player2']) || ($m['player1'] == $match['player2'] && $m['player2'] == $match['player1'])) {
+              $match_exists = true;
+              break;
+            }
+          }
+        }
+
+        if (!$match_exists) {
+          $matches[] = $match;
+          $printtable[$id1][$id2+1] = $match;
+          $printtable[$id2][$id1+1] = $match;
+        }
+      }
+    }
+
+    $crosstable = array(
+      'time' => $crosstable_time,
+      'time_local' => $crosstable_time_local,
+      'finished' => $crosstable_finished,
+      'players' => $players,
+      'countries' => $countries,
+      'player_names' => $player_names,
+      'matches' => $matches,
+      'table' => $printtable
+    );
+
+    $crosstables[] = $crosstable;
+  }
+
+  return $crosstables;
 }
 
 
@@ -963,4 +1247,20 @@ function secondsToTime($inputSeconds) {
         's' => (int) $seconds,
     );
     return $obj;
+}
+
+
+function sort_by_name($a, $b) {
+    if ($a['name'] == $b['name']) {
+        return 0;
+    }
+    return ($a['name'] < $b['name']) ? -1 : 1;
+}
+
+
+function sort_by_time($a, $b) {
+    if ($a['time'] == $b['time']) {
+        return 0;
+    }
+    return ($a['time'] < $b['time']) ? -1 : 1;
 }
