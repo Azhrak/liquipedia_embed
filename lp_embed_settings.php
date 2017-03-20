@@ -32,7 +32,7 @@ define('GROUPS_PER_ROW', 3);
 
 
 // TEXTS
-define('EMPTY_NAME', 'tba');
+define('EMPTY_NAME', 'tbd');
 define('BYE_NAME', 'bye');
 
 define('BAD_URL', 'Error: Bad URL.');
