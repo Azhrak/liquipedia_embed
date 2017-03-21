@@ -397,7 +397,7 @@ elseif ($mode == 'group') {
               <?php else : ?>
                 <td class="crosstable_score">
                   <?php $match = $group['crosstable']['table'][$row][$col]; ?>
-                  <?php if (!empty($match)) : ?>
+                  <?php if (!empty($match) && isset($match['score1'])) : ?>
                     <?php echo $match['score1']; ?> - <?php echo $match['score2']; ?>
                   <?php endif; ?>
                 </td>
@@ -859,7 +859,6 @@ function parse_groups($html) {
       'matches' => $matches,
       'crosstable' => null
     );
-    // print_r($group);die;
 
     $groups[$stage][] = $group;
   }
@@ -880,6 +879,7 @@ function parse_groups($html) {
     }
   }
 
+  // print_r($groups);die;
   return $groups;
 }
 
@@ -1003,6 +1003,8 @@ function parse_crosstables($html) {
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) { $offsets_tmp[] = $hit[1]; }
 
+      $rowid = $cellid = 0;
+      
       for ($j=0; $j<count($offsets_tmp); $j++) {
         $offset_start = $offsets_tmp[$j];
         if (isset($offsets_tmp[$j+1])) {
@@ -1033,31 +1035,42 @@ function parse_crosstables($html) {
           else if ($name1 != 'TBD') {
             foreach ($players as $i => $p) { if ($p['name'] == $name1) { $id1 = $i; break; } }
           }
+          
+          if (set_value($name2, $offset, '/<div class="bracket-popup-header-right">.+?<\/a>([^<]+)/', $html_slice_tmp)) {
+            $name2 = trim($name2);
+            $name2 = str_replace(array('&nbsp;','&#160;'), '', $name2);
+            if (empty($name2)) {
+              $name2 = EMPTY_NAME;
+            }
+            else if ($name2 != 'TBD') {
+              foreach ($players as $i => $p) { if ($p['name'] == $name2) { $id2 = $i; break; } }
+            }
+          }
+
+          if (preg_match('/class="datetime">([^<]+).*?UTC(.\d+)/', $html_slice_tmp, $hit)) {
+            $match_time = trim($hit[1]);
+            $match_time = str_replace(' - ', ', ', $match_time);
+            $match_time = $match_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $match_time));
+            $utc_diff = (date("I")) ? TIMEZONE+1 - $hit[2] : TIMEZONE - $hit[2];
+            $match_time = strtotime($utc_diff . " hour", $match_time);
+
+            if (empty($crosstable_time) || $match_time < $crosstable_time) {
+              $crosstable_time = $match_time;
+              $crosstable_time_local = $match_time_local;
+            }
+          }
         }
-
-        if (set_value($name2, $offset, '/<div class="bracket-popup-header-right">.+?<\/a>([^<]+)/', $html_slice_tmp)) {
-          $name2 = trim($name2);
-          $name2 = str_replace(array('&nbsp;','&#160;'), '', $name2);
-          if (empty($name2)) {
-            $name2 = EMPTY_NAME;
+        
+        // If player names not found, deduce them from the table indexes
+        if ($id1 == null) {
+          if ($cellid == $rowid) $cellid++;
+          if (count($players) <= $cellid) {
+            $rowid++;
+            $cellid = 0;
           }
-          else if ($name2 != 'TBD') {
-            foreach ($players as $i => $p) { if ($p['name'] == $name2) { $id2 = $i; break; } }
-          }
-        }
-
-        preg_match('/class="datetime">([^<]+).*?UTC(.\d+)/', $html_slice_tmp, $hit);
-        if (isset($hit[1])) {
-          $match_time = trim($hit[1]);
-          $match_time = str_replace(' - ', ', ', $match_time);
-          $match_time = $match_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $match_time));
-          $utc_diff = (date("I")) ? TIMEZONE+1 - $hit[2] : TIMEZONE - $hit[2];
-          $match_time = strtotime($utc_diff . " hour", $match_time);
-
-          if (empty($crosstable_time) || $match_time < $crosstable_time) {
-            $crosstable_time = $match_time;
-            $crosstable_time_local = $match_time_local;
-          }
+          $id1 = $rowid;
+          $id2 = $cellid;
+          $cellid++;
         }
 
         if (0 < $score1 || 0 < $score2) {
@@ -1075,24 +1088,19 @@ function parse_crosstables($html) {
           'time' => $match_time,
           'time_local' => $match_time_local
         );
-        // print_r($match);die;
 
-        //Check if match already exists
+        //Check if match already exists, and add to array if not
         $match_exists = false;
         if (!empty($matches)) {
           foreach ($matches as $m) {
             if (($m['player1'] == $match['player1'] && $m['player2'] == $match['player2']) || ($m['player1'] == $match['player2'] && $m['player2'] == $match['player1'])) {
-              $match_exists = true;
+              $matches[] = $match;
               break;
             }
           }
         }
-
-        if (!$match_exists) {
-          $matches[] = $match;
-          $printtable[$id1][$id2+1] = $match;
-          $printtable[$id2][$id1+1] = $match;
-        }
+        
+        $printtable[$id1][$id2+1] = $match;
       }
     }
 
