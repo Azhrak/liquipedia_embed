@@ -20,10 +20,10 @@ $player_filter = (isset($_GET['player'])) ? trim(strtolower($_GET['player'])) : 
 $use_localtime = (isset($_GET['localtime']) && $_GET['localtime'] == 1);
 
 
-$title = '';
-$page = '';
-if (preg_match('/(?:http:\/\/)?wiki\.teamliquid\.net\/starcraft2\/([^\?]+)/', $url, $matches)) {
-  $page = $matches[1];
+$title = $page = $game = '';
+if (preg_match('/(?:http:\/\/)?wiki\.teamliquid\.net\/starcraft(2?)\/([^\?]+)/', $url, $matches)) {
+  $game = ($matches[1] == '2')? 'sc2' : 'sc'; //sc1 or sc2 wiki
+  $page = $matches[2];
   $title = preg_replace('/[^\w\d_\.-]/', '_', $page);
 }
 else {
@@ -57,7 +57,9 @@ if (!empty($group_select)) {
   $group_select = $selections;
 }
 
-$cachefile = TMP_DIR.$title;
+$prefix = ''; //cache file prefix
+$prefix = ($game == 'sc')? 'sc-' : ''; //add prefix for sc1 wiki files
+$cachefile = TMP_DIR.$prefix.$title;
 $suffix = ''; //cache file suffix
 $cache_dur = CACHE_DUR;
 if (time() < $start_time) {
@@ -75,8 +77,9 @@ if (!empty($cache_dur_fixed)) {
 $embeds = $brackets = $groups= array();
 
 if (!$use_cache || !file_exists($cachefile.$suffix) || (time() - filemtime($cachefile.$suffix) > $cache_dur)) {
-  $content_url = 'http://wiki.teamliquid.net/starcraft2/index.php?action=render&title='.$page;
-  $content_url = 'http://wiki.teamliquid.net/starcraft2/'.$page;
+  $wiki = ($game == 'sc')? 'starcraft' : 'starcraft2';
+  //$content_url = 'http://wiki.teamliquid.net/'.$wiki.'/index.php?action=render&title='.$page; //load only the content - smaller but not in cache
+  $content_url = 'http://wiki.teamliquid.net/'.$wiki.'/'.$page;
 
   $html = get_with_curl($content_url);
 
@@ -1004,7 +1007,7 @@ function parse_crosstables($html) {
       foreach ($hits[0] as $hit) { $offsets_tmp[] = $hit[1]; }
 
       $rowid = $cellid = 0;
-      
+
       for ($j=0; $j<count($offsets_tmp); $j++) {
         $offset_start = $offsets_tmp[$j];
         if (isset($offsets_tmp[$j+1])) {
@@ -1035,7 +1038,7 @@ function parse_crosstables($html) {
           else if ($name1 != 'TBD') {
             foreach ($players as $i => $p) { if ($p['name'] == $name1) { $id1 = $i; break; } }
           }
-          
+
           if (set_value($name2, $offset, '/<div class="bracket-popup-header-right">.+?<\/a>([^<]+)/', $html_slice_tmp)) {
             $name2 = trim($name2);
             $name2 = str_replace(array('&nbsp;','&#160;'), '', $name2);
@@ -1060,7 +1063,7 @@ function parse_crosstables($html) {
             }
           }
         }
-        
+
         // If player names not found, deduce them from the table indexes
         if ($id1 == null) {
           if ($cellid == $rowid) $cellid++;
@@ -1099,7 +1102,7 @@ function parse_crosstables($html) {
             }
           }
         }
-        
+
         $printtable[$id1][$id2+1] = $match;
       }
     }
