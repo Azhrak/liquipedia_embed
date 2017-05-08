@@ -18,6 +18,7 @@ $group_select = (isset($_GET['gselect']) && $_GET['gselect']) ? $_GET['gselect']
 $country_filter = (isset($_GET['country'])) ? trim(strtolower($_GET['country'])) : null; // filter to show only groups with given country in them
 $player_filter = (isset($_GET['player'])) ? trim(strtolower($_GET['player'])) : null; // filter to show only groups with given player in them
 $use_localtime = (isset($_GET['localtime']) && $_GET['localtime'] == 1);
+$debug = isset($_GET['debug']);
 
 
 $title = $page = $game = '';
@@ -122,6 +123,11 @@ if (!$use_cache || !file_exists($cachefile.$suffix) || (time() - filemtime($cach
 }
 else {
   $embeds = unserialize(file_get_contents($cachefile.$suffix));
+}
+
+if ($debug) {
+  print_r($embeds);
+  die;
 }
 
 
@@ -700,6 +706,12 @@ function parse_groups($html) {
       }
     }
 
+    // Make sure the group html slice ends before some next section
+    if (preg_match('/<h[23]>/', $html_slice, $hit, PREG_OFFSET_CAPTURE)) {
+      $html_slice = substr($html_slice, 0, $hit[0][1]);
+    }
+
+    // Initialize parameters
     $players = $player_names = $countries = $matches = $group = array();
     $group_name = $group_time = $group_time_local = null;
     $group_finished = true;
