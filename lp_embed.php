@@ -861,7 +861,7 @@ function parse_groups($html) {
     }
 
     // Check if the group belongs to the next group stage
-    if (!empty($stage_offsets) && isset($stage_offsets[$stage+1]) && $stage_offsets[$stage+1] < $offsets[$k] ) $stage++;
+    if (!empty($groups) && !empty($stage_offsets) && isset($stage_offsets[$stage+1]) && $stage_offsets[$stage+1] < $offsets[$k] ) $stage++;
 
     $group = array(
       'name' => $group_name,
