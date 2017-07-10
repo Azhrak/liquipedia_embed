@@ -230,7 +230,6 @@ td.first_player_row {
 padding-top: 3px !important;
 }
 td.player_match_score, td.player_map_score {
-width: 26px;
 text-align: center;
 }
 td.matches_name.left {
