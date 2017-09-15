@@ -431,6 +431,7 @@ elseif ($mode == 'group') {
 <?php } ?>
 <?php
 function parse_brackets($html) {
+  global $debug;
 
   if (!preg_match_all('/class="bracket[ "]/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
     if (!preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
@@ -656,6 +657,8 @@ function parse_brackets($html) {
 
 
 function parse_groups($html) {
+  global $debug;
+  
   if (!preg_match_all('/<table class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?" style="width: \d\d\dpx;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
     // echo "No groups found.";
     return array();
@@ -719,8 +722,8 @@ function parse_groups($html) {
     // Read group info
     preg_match('/<th colspan="\d">.*Group ([^<]+)\s*/', $html_slice, $hit);
     $group_name = (isset($hit[1])) ? trim($hit[1]) : $group_name;
-
-    preg_match('/<td colspan="\d" [^>]+>[\s]*<b>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
+    
+    preg_match('/class="timer-object"[^>]+>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
     if (isset($hit[1])) {
       $group_time = trim($hit[1]);
       $group_time = $group_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $group_time));
