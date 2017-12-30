@@ -22,7 +22,7 @@ $debug = isset($_GET['debug']);
 
 
 $title = $page = $game = '';
-if (preg_match('/(?:http:\/\/)?wiki\.teamliquid\.net\/starcraft(2?)\/([^\?]+)/', $url, $matches)) {
+if (preg_match('/(?:http:\/\/)?(?:wiki\.teamliquid|liquipedia)\.net\/starcraft(2?)\/([^\?]+)/', $url, $matches)) {
   $game = ($matches[1] == '2')? 'sc2' : 'sc'; //sc1 or sc2 wiki
   $page = $matches[2];
   $title = preg_replace('/[^\w\d_\.-]/', '_', $page);
@@ -80,7 +80,7 @@ $embeds = $brackets = $groups= array();
 if (!$use_cache || !file_exists($cachefile.$suffix) || (time() - filemtime($cachefile.$suffix) > $cache_dur)) {
   $wiki = ($game == 'sc')? 'starcraft' : 'starcraft2';
   //$content_url = 'http://wiki.teamliquid.net/'.$wiki.'/index.php?action=render&title='.$page; //load only the content - smaller but not in cache
-  $content_url = 'http://wiki.teamliquid.net/'.$wiki.'/'.$page;
+  $content_url = 'http://liquipedia.net/'.$wiki.'/'.$page;
 
   $html = get_with_curl($content_url);
 
@@ -433,7 +433,7 @@ elseif ($mode == 'group') {
 function parse_brackets($html) {
   global $debug;
 
-  if (!preg_match_all('/class="bracket[ "]/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
+  if (!preg_match_all('/class="bracket(?:"| [^"]+")/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
     if (!preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
       // echo "Error: No bracket found.";
       return array();
