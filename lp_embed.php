@@ -538,7 +538,15 @@ function parse_brackets($html) {
 
       $round_of = $max_round_of;
       $round_counter = 0;
-      for ($i=0; $i<count($players)-1; $i+=2) {
+      $start_match = 0;
+
+      // skip players until first 2^N round is found
+      if (!preg_match("/^\d+$/", log($round_of, 2))) {
+        $round_of = pow(2, floor(log($round_of, 2)));
+        $start_match = ($max_round_of - $round_of) * 2;
+      }
+
+      for ($i=$start_match; $i<count($players)-1; $i+=2) {
         $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i+1]);
         $round_counter += 2;
         if ($round_of-1 <= $round_counter) {
@@ -658,7 +666,7 @@ function parse_brackets($html) {
 
 function parse_groups($html) {
   global $debug;
-  
+
   if (!preg_match_all('/<table class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?" style="width: \d\d\dpx;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
     // echo "No groups found.";
     return array();
@@ -722,7 +730,7 @@ function parse_groups($html) {
     // Read group info
     preg_match('/<th colspan="\d">.*Group ([^<]+)\s*/', $html_slice, $hit);
     $group_name = (isset($hit[1])) ? trim($hit[1]) : $group_name;
-    
+
     preg_match('/class="timer-object"[^>]+>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
     if (isset($hit[1])) {
       $group_time = trim($hit[1]);
