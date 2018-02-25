@@ -190,6 +190,42 @@ margin-top: -330px;
 .forum_bracket_line_vertical {
 margin: -10px -15px 0 0;
 }
+/* Ro12 bracket */
+.forum_bracket_ro_12 .forum_bracket_round_1 .forum_bracket_line_vertical {
+margin: -35px 1px 0 0;
+width: 7px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_2 .forum_bracket_line_vertical {
+margin: -10px -15px 0 0;
+}
+.forum_bracket_ro_12 .forum_bracket_round_1 .forum_bracket_line_join {
+border-bottom: none;
+height: 16px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_2 .forum_bracket_line_join {
+height: 79px;
+margin-top: -51px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_3 .forum_bracket_line_join {
+height: 158px;
+margin-top: -89px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_1 .forum_bracket_match,
+.forum_bracket_ro_12 .forum_bracket_round_2 .forum_bracket_match {
+padding: 0px 0px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_3 .forum_bracket_match {
+padding: 40px 0px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_4 .forum_bracket_match {
+padding: 120px 0px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_5 .forum_bracket_match {
+padding: 280px 0px;
+}
+.forum_bracket_ro_12 .forum_bracket_round_6 .forum_bracket_match {
+padding: 60px 0px;
+}
 /* Groups */
 a {
 color: #0606B7;
@@ -230,6 +266,7 @@ td.first_player_row {
 padding-top: 3px !important;
 }
 td.player_match_score, td.player_map_score {
+width: 26px;
 text-align: center;
 }
 td.matches_name.left {
@@ -252,7 +289,7 @@ width: 10px;
 text-decoration: none;
 }
 table.group_crosstable td, table.group_crosstable th {
-padding: 0 5px; 
+padding: 0 5px;
 text-align: center;
 min-width: 30px;
 }

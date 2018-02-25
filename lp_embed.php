@@ -176,7 +176,7 @@ $round_count = 1;
 $prev_round = null;
 ?>
 <?php if (!empty($bracket)) : ?>
-  <div class="forum_bracket <?php echo 'forum_bracket_size_'.count($bracket['rounds']);?>">
+  <div class="forum_bracket <?php echo 'forum_bracket_size_'.count($bracket['rounds']);?> <?php echo 'forum_bracket_ro_'.array_keys($bracket['rounds'])[0];?>">
   <?php foreach ($bracket['rounds'] as $round => $matches) : ?>
     <?php if (!empty($ro_start) && $round != 'bronze' && $ro_start < $round) continue;?>
     <?php if (!empty($ro_end) && $round != 'bronze' && $round < $ro_end) continue;?>
@@ -237,6 +237,9 @@ $prev_round = null;
       </div>
       <?php if ($round == 'bronze') : ?>
         </div>
+      <?php elseif ($round == 12) : ?>
+        <div class="forum_bracket_line_join"></div>
+        <div class="forum_bracket_line_vertical"></div>
       <?php elseif ($i < count($matches)-1 && $i % 2 == 0) : ?>
         <div class="forum_bracket_line_join"></div>
         <div class="forum_bracket_line_vertical"></div>
@@ -542,15 +545,17 @@ function parse_brackets($html) {
 
       // skip players until first 2^N round is found
       if (!preg_match("/^\d+$/", log($round_of, 2))) {
-        $round_of = pow(2, floor(log($round_of, 2)));
-        $start_match = ($max_round_of - $round_of) * 2;
+        if ($round_of != 12) { //ro12 is an exception for now
+            $round_of = pow(2, floor(log($round_of, 2)));
+            $start_match = ($max_round_of - $round_of) * 2;
+        }
       }
 
       for ($i=$start_match; $i<count($players)-1; $i+=2) {
         $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i+1]);
         $round_counter += 2;
-        if ($round_of-1 <= $round_counter) {
-          $round_of /= 2;
+        if (pow(2, floor(log($round_of, 2)))-1 <= $round_counter) {
+          $round_of = pow(2, ceil(log($round_of, 2))) / 2;
           $round_counter = 0;
         }
       }
