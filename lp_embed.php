@@ -18,10 +18,11 @@ $group_select = (isset($_GET['gselect']) && $_GET['gselect']) ? $_GET['gselect']
 $country_filter = (isset($_GET['country'])) ? trim(strtolower($_GET['country'])) : null; // filter to show only groups with given country in them
 $player_filter = (isset($_GET['player'])) ? trim(strtolower($_GET['player'])) : null; // filter to show only groups with given player in them
 $use_localtime = (isset($_GET['localtime']) && $_GET['localtime'] == 1);
+$debug = isset($_GET['debug']);
 
 
 $title = $page = $game = '';
-if (preg_match('/(?:http:\/\/)?wiki\.teamliquid\.net\/starcraft(2?)\/([^\?]+)/', $url, $matches)) {
+if (preg_match('/(?:http:\/\/)?(?:wiki\.teamliquid|liquipedia)\.net\/starcraft(2?)\/([^\?]+)/', $url, $matches)) {
   $game = ($matches[1] == '2')? 'sc2' : 'sc'; //sc1 or sc2 wiki
   $page = $matches[2];
   $title = preg_replace('/[^\w\d_\.-]/', '_', $page);
@@ -79,7 +80,7 @@ $embeds = $brackets = $groups= array();
 if (!$use_cache || !file_exists($cachefile.$suffix) || (time() - filemtime($cachefile.$suffix) > $cache_dur)) {
   $wiki = ($game == 'sc')? 'starcraft' : 'starcraft2';
   //$content_url = 'http://wiki.teamliquid.net/'.$wiki.'/index.php?action=render&title='.$page; //load only the content - smaller but not in cache
-  $content_url = 'http://wiki.teamliquid.net/'.$wiki.'/'.$page;
+  $content_url = 'http://liquipedia.net/'.$wiki.'/'.$page;
 
   $html = get_with_curl($content_url);
 
@@ -122,6 +123,11 @@ if (!$use_cache || !file_exists($cachefile.$suffix) || (time() - filemtime($cach
 }
 else {
   $embeds = unserialize(file_get_contents($cachefile.$suffix));
+}
+
+if ($debug) {
+  print_r($embeds);
+  die;
 }
 
 
@@ -170,7 +176,7 @@ $round_count = 1;
 $prev_round = null;
 ?>
 <?php if (!empty($bracket)) : ?>
-  <div class="forum_bracket <?php echo 'forum_bracket_size_'.count($bracket['rounds']);?>">
+  <div class="forum_bracket <?php echo 'forum_bracket_size_'.count($bracket['rounds']);?> <?php echo 'forum_bracket_ro_'.array_keys($bracket['rounds'])[0];?>">
   <?php foreach ($bracket['rounds'] as $round => $matches) : ?>
     <?php if (!empty($ro_start) && $round != 'bronze' && $ro_start < $round) continue;?>
     <?php if (!empty($ro_end) && $round != 'bronze' && $round < $ro_end) continue;?>
@@ -231,6 +237,9 @@ $prev_round = null;
       </div>
       <?php if ($round == 'bronze') : ?>
         </div>
+      <?php elseif ($round == 12) : ?>
+        <div class="forum_bracket_line_join"></div>
+        <div class="forum_bracket_line_vertical"></div>
       <?php elseif ($i < count($matches)-1 && $i % 2 == 0) : ?>
         <div class="forum_bracket_line_join"></div>
         <div class="forum_bracket_line_vertical"></div>
@@ -425,8 +434,9 @@ elseif ($mode == 'group') {
 <?php } ?>
 <?php
 function parse_brackets($html) {
+  global $debug;
 
-  if (!preg_match_all('/class="bracket[ "]/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
+  if (!preg_match_all('/class="bracket(?:"| [^"]+")/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
     if (!preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
       // echo "Error: No bracket found.";
       return array();
@@ -531,11 +541,21 @@ function parse_brackets($html) {
 
       $round_of = $max_round_of;
       $round_counter = 0;
-      for ($i=0; $i<count($players)-1; $i+=2) {
+      $start_match = 0;
+
+      // skip players until first 2^N round is found
+      if (!preg_match("/^\d+$/", log($round_of, 2))) {
+        if ($round_of != 12) { //ro12 is an exception for now
+            $round_of = pow(2, floor(log($round_of, 2)));
+            $start_match = ($max_round_of - $round_of) * 2;
+        }
+      }
+
+      for ($i=$start_match; $i<count($players)-1; $i+=2) {
         $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i+1]);
         $round_counter += 2;
-        if ($round_of-1 <= $round_counter) {
-          $round_of /= 2;
+        if (pow(2, floor(log($round_of, 2)))-1 <= $round_counter) {
+          $round_of = pow(2, ceil(log($round_of, 2))) / 2;
           $round_counter = 0;
         }
       }
@@ -650,6 +670,8 @@ function parse_brackets($html) {
 
 
 function parse_groups($html) {
+  global $debug;
+
   if (!preg_match_all('/<table class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?" style="width: \d\d\dpx;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
     // echo "No groups found.";
     return array();
@@ -700,6 +722,12 @@ function parse_groups($html) {
       }
     }
 
+    // Make sure the group html slice ends before some next section
+    if (preg_match('/<h[23]>/', $html_slice, $hit, PREG_OFFSET_CAPTURE)) {
+      $html_slice = substr($html_slice, 0, $hit[0][1]);
+    }
+
+    // Initialize parameters
     $players = $player_names = $countries = $matches = $group = array();
     $group_name = $group_time = $group_time_local = null;
     $group_finished = true;
@@ -708,7 +736,7 @@ function parse_groups($html) {
     preg_match('/<th colspan="\d">.*Group ([^<]+)\s*/', $html_slice, $hit);
     $group_name = (isset($hit[1])) ? trim($hit[1]) : $group_name;
 
-    preg_match('/<td colspan="\d" [^>]+>[\s]*<b>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
+    preg_match('/class="timer-object"[^>]*>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
     if (isset($hit[1])) {
       $group_time = trim($hit[1]);
       $group_time = $group_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $group_time));
@@ -849,7 +877,7 @@ function parse_groups($html) {
     }
 
     // Check if the group belongs to the next group stage
-    if (!empty($stage_offsets) && isset($stage_offsets[$stage+1]) && $stage_offsets[$stage+1] < $offsets[$k] ) $stage++;
+    if (!empty($groups) && !empty($stage_offsets) && isset($stage_offsets[$stage+1]) && $stage_offsets[$stage+1] < $offsets[$k] ) $stage++;
 
     $group = array(
       'name' => $group_name,
