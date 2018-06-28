@@ -812,7 +812,7 @@ function parse_groups($html) {
     }
 
     // Read each match row
-    if (preg_match_all('/<tr[^>]*>[\s]*<td(?: class="matchlistslot" )?width="[^"]+" align="right"/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/<tr[^>]*>[\s]*<td class="matchlistslot" style="width:[^"]+;text-align:right/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
 
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) { $offsets_tmp[] = $hit[1]; }
@@ -828,8 +828,8 @@ function parse_groups($html) {
         $winner = $name1 = $name2 = $id1 = $id2 = $score1 = $score2 = null;
         $offset = 0;
 
-        $winner = (preg_match('/align="right" style="font-weight:bold/', $html_slice_tmp)) ? 0 : $winner;
-        $winner = (preg_match('/width="[^"]+" style="font-weight:bold/', $html_slice_tmp)) ? 1 : $winner;
+        $winner = (preg_match('/style="width:[^"]+;text-align:right;font-weight:bold;/', $html_slice_tmp)) ? 0 : $winner;
+        $winner = (preg_match('/style="width:[^"]+;font-weight:bold/', $html_slice_tmp)) ? 1 : $winner;
 
         if (set_value($name1, $offset, '/<span[^>]*>([^<]*)/', $html_slice_tmp)) {
           $name1 = trim($name1);
@@ -841,9 +841,9 @@ function parse_groups($html) {
           }
         }
 
-        set_value($score1, $offset, '/<td[^>]*?align="center"[^>]*>[\s]*([\d]+)/', $html_slice_tmp);
+        set_value($score1, $offset, '/<td[^>]*?text-align:center[^>]*>[\s]*([\d]+)/', $html_slice_tmp);
 
-        set_value($score2, $offset, '/<td[^>]*?align="center"[^>]*>[\s]*([\d]+)/', $html_slice_tmp);
+        set_value($score2, $offset, '/<td[^>]*?text-align:center[^>]*>[\s]*([\d]+)/', $html_slice_tmp);
 
         if (set_value($name2, $offset, '/<span[^>]*>([^<]*)/', $html_slice_tmp)) {
           $name2 = trim($name2);
