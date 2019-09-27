@@ -238,10 +238,10 @@ padding: 0;
 }
 div.groups {
 clear: both;
-width: 647px;
+width: 640px;
 }
 div.group {
-width: 202px;
+width: 200px;
 float: left;
 margin: 15px 20px 10px 0px;
 }
@@ -266,6 +266,7 @@ td.first_player_row {
 padding-top: 3px !important;
 }
 td.player_match_score, td.player_map_score {
+width: 35px;
 text-align: center;
 }
 td.player_match_score{
