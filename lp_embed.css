@@ -238,12 +238,12 @@ padding: 0;
 }
 div.groups {
 clear: both;
-width: 680px;
+width: 647px;
 }
 div.group {
-width: 200px;
+width: 202px;
 float: left;
-margin: 15px 30px 10px 0px;
+margin: 15px 20px 10px 0px;
 }
 div.group.right {
 margin-right: 0px;
@@ -266,8 +266,13 @@ td.first_player_row {
 padding-top: 3px !important;
 }
 td.player_match_score, td.player_map_score {
-width: 26px;
 text-align: center;
+}
+td.player_match_score{
+width: 32px;
+}
+td.player_map_score {
+width: 35px;
 }
 td.matches_name.left {
 text-align: right;
