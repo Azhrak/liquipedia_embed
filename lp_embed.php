@@ -485,9 +485,9 @@ function parse_brackets($html) {
         preg_match('/background:([^;]+)/', $match, $hit);
         if (isset($hit[1])) {
           switch($hit[1]) {
-            case '#F2B8B8': case 'rgb(242,184,184)': $race = 'Zerg'; break;
-            case '#B8B8F2': case 'rgb(184,184,242)': $race = 'Terran'; break;
-            case '#B8F2B8': case 'rgb(184,242,184)': $race = 'Protoss'; break;
+            case '#F2B8B8': case 'rgb(242,184,184)': case 'rgb(246.8,204.8,204.8)': $race = 'Zerg'; break;
+            case '#B8B8F2': case 'rgb(184,184,242)': case 'rgb(204.26666666667,206.93333333333,240.4)': $race = 'Terran'; break;
+            case '#B8F2B8': case 'rgb(184,242,184)': case 'rgb(203.73333333333,243.06666666667,203.73333333333)': $race = 'Protoss'; break;
           }
           if ($hit[1] == 'DDDDDD') $name = BYE_NAME;
         }
