@@ -772,7 +772,7 @@ function parse_groups($html) {
         if ($group_finished && strlen($position) == 0) $group_finished = false;
 
         if (set_value($country, $offset, '/Category:([^"]+)"/', $html_slice_tmp)) {
-          set_value($country_short, $offset, '/src="[^"]+?\/([\w]{2})\.\w{3}"/', $html_slice_tmp);
+          set_value($country_short, $offset, '/src="[^"]+?\/([\w]{2})(?:_hd)\.\w{3}"/', $html_slice_tmp);
           $country_short = strtolower($country_short);
           if ($country_short == 'uk') $country_short = 'gb';
         }
@@ -986,7 +986,7 @@ function parse_crosstables($html) {
         $offset = 0;
 
         if (set_value($country, $offset, '/Category:([^"]+)"/', $html_slice_tmp)) {
-          set_value($country_short, $offset, '/src="[^"]+?\/([\w]{2})\.\w{3}"/', $html_slice_tmp);
+          set_value($country_short, $offset, '/src="[^"]+?\/([\w]{2})(?:_hd)\.\w{3}"/', $html_slice_tmp);
           $country_short = strtolower($country_short);
           if ($country_short == 'uk') $country_short = 'gb';
         }
