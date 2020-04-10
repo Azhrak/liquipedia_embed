@@ -733,7 +733,7 @@ function parse_groups($html) {
     $group_finished = true;
 
     // Read group info
-    preg_match('/<th colspan="\d">.*Group ([^<]+)\s*/', $html_slice, $hit);
+    preg_match('/<th colspan="\d">.*Group (\w{1,2})\s*/', $html_slice, $hit);
     $group_name = (isset($hit[1])) ? trim($hit[1]) : $group_name;
 
     preg_match('/class="timer-object"[^>]*>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
