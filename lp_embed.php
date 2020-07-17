@@ -131,7 +131,7 @@ if ($mode == 'bracket') {
   if (isset($embeds['brackets'])) $brackets = $embeds['brackets'];
   if (empty($brackets)) die(BRACKET_NOT_FOUND);
   $bracket = (isset($brackets[$bracket_number - 1])) ? $brackets[$bracket_number - 1] : $brackets[0];
-  // print_r($bracket);die;
+  // print_r($bracket); die;
 ?>
   <!DOCTYPE HTML>
   <html>
@@ -471,7 +471,7 @@ function parse_brackets($html)
 
       $pattern = '/bracket-cell-[^>]+>[\s\S]*?bracket-score[^>]+>[^<]*/i';
       preg_match_all($pattern, $html_slice, $matches);
-      // print_r($matches);die;
+      // print_r($matches); die;
 
       $players = $rounds = $bracket = array();
       $winner_count = 0;
@@ -538,7 +538,7 @@ function parse_brackets($html)
         );
         $players[] = $player;
       }
-      // print_r($players);die;
+      // print_r($players); die;
       // print_r($scores);die;
 
       $bronze_match = array();
@@ -766,7 +766,7 @@ function parse_groups($html)
     }
 
     // Read each player row
-    if (preg_match_all('/<tr[^>]*>[\s]*<th style="width: 16px[^"]+">/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/<tr[^>]*>[\s]*<th [^>]*style="width: 16px[^"]+"[^>]*>/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) {
         $offsets_tmp[] = $hit[1];
