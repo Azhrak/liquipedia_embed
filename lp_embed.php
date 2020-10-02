@@ -485,25 +485,17 @@ function parse_brackets($html)
         $score = '';
         $winner = false;
 
-        preg_match('/background:([^;]+)/', $match, $hit);
-        if (isset($hit[1])) {
-          switch ($hit[1]) {
-            case '#F2B8B8':
-            case 'rgb(242,184,184)':
-            case 'rgb(246.8,204.8,204.8)':
-            case 'rgb(251,223,223)':
+        preg_match('/background:rgb\(([^,]+),\s*([^,]+),\s*([^\)]+)/', $match, $hit);
+        if (count($hit) > 2) {
+          $colors = $hit[1] . ',' . $hit[2] . ',' . $hit[3];
+          switch ($colors) {
+            case '251,223,223':
               $race = 'Zerg';
               break;
-            case '#B8B8F2':
-            case 'rgb(184,184,242)':
-            case 'rgb(204.26666666667,206.93333333333,240.4)':
-            case 'rgb(222,227,239)':
+            case '222,227,239':
               $race = 'Terran';
               break;
-            case '#B8F2B8':
-            case 'rgb(184,242,184)':
-            case 'rgb(203.73333333333,243.06666666667,203.73333333333)':
-            case 'rgb(221,244,221)':
+            case '221,244,221':
               $race = 'Protoss';
               break;
           }
@@ -692,7 +684,7 @@ function parse_groups($html)
 {
   global $debug;
 
-  if (!preg_match_all('/<table class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?" style="width: \d\d\dpx;margin: 0px;">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
+  if (!preg_match_all('/<table\s+class="[^"]*?(?:prettytable|wikitable)?(?: grouptable)?"\s+style="width:\s*\d\d\dpx;margin:\s*0px;?">/', $html, $matches, PREG_OFFSET_CAPTURE, 5000)) {
     // echo "No groups found.";
     return array();
   }
@@ -766,7 +758,7 @@ function parse_groups($html)
     }
 
     // Read each player row
-    if (preg_match_all('/<tr[^>]*>[\s]*<th [^>]*style="width: 16px[^"]+"[^>]*>/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/<tr[^>]*>[\s]*<th [^>]*class="bg-[^>]*>/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) {
         $offsets_tmp[] = $hit[1];
@@ -788,9 +780,9 @@ function parse_groups($html)
         $advance = $position = $country = $country_short = $race = $name = $match_score = $map_score = null;
         $offset = 0;
 
-        $advance = preg_match('/color:#cfc;/', $html_slice_tmp);
+        $advance = preg_match('/<td [^>]*class="grouptableslot[^"]*bg-up/', $html_slice_tmp);
 
-        set_value($position, $offset, '/width: 16px[^"]+">[\s]*(\d)/', $html_slice_tmp);
+        set_value($position, $offset, '/<th [^>]*>\s*(\d+)/', $html_slice_tmp);
         if ($group_finished && strlen($position) == 0) $group_finished = false;
 
         if (set_value($country, $offset, '/Category:([^"]+)"/', $html_slice_tmp)) {
@@ -834,7 +826,7 @@ function parse_groups($html)
     }
 
     // Read each match row
-    if (preg_match_all('/<tr[^>]*>[\s]*<td class="matchlistslot" style="width:[^"]+;text-align:right/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/<tr[^>]*class="match-row ?[^"]*">/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
 
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) {
@@ -851,8 +843,14 @@ function parse_groups($html)
         $winner = $name1 = $name2 = $id1 = $id2 = $score1 = $score2 = null;
         $offset = 0;
 
-        $winner = (preg_match('/style="width:[^"]+;text-align:right;font-weight:bold;/', $html_slice_tmp)) ? 0 : $winner;
-        $winner = (preg_match('/style="width:[^"]+;font-weight:bold/', $html_slice_tmp)) ? 1 : $winner;
+        if (preg_match_all('/class="[^"]*matchlistslot\s*[^"]*"/', $html_slice_tmp, $matchlistslots)) {
+          foreach ($matchlistslots[0] as $m_index => $m_value) {
+            if (strpos($m_value, 'bg-win') !== false) {
+              $winner = $m_index;
+              break;
+            }
+          }
+        }
 
         if (set_value($name1, $offset, '/<span[^>]*>([^<]*)/', $html_slice_tmp)) {
           $name1 = trim($name1);
@@ -888,8 +886,8 @@ function parse_groups($html)
 
         // BO1 situation, no scores, just winner
         if (strlen($score1) == 0 && strlen($score2) == 0 && 0 < strlen($winner)) {
-          $score1 = ($winner == 0) ? 1 : 0;
-          $score2 = ($winner == 1) ? 1 : 0;
+          $score1 = ($winner === 0) ? 1 : 0;
+          $score2 = ($winner === 1) ? 1 : 0;
         }
 
         if ($group_finished && strlen($winner) == 0) $group_finished = false;
