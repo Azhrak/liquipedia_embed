@@ -757,8 +757,27 @@ function parse_groups($html)
       $group_time = strtotime($utc_diff . " hour", $group_time);
     }
 
+    // Separate players and matches tables to make parsing easy
+    $matchlist_offset = strpos($html_slice, 'matchlist');
+    $players_html = substr($html_slice, 0, $matchlist_offset);
+    $matches_html = substr($html_slice, $matchlist_offset);
+
+    //Check for round-based results -- if found, skip to the last existing round
+    if (preg_match_all('/<tr data-toggle-area-content="(\d+)"/', $players_html, $hits, PREG_OFFSET_CAPTURE)) {
+      $round_offset = 0;
+      for ($player_index = count($hits[1]) - 2; $player_index >= 0; $player_index--) {
+        // Count down until we find the offset of the first item in the last round
+        if ($hits[1][$player_index][0] == $hits[1][$player_index + 1][0]) {
+          $round_offset = $hits[0][$player_index][1]; // Note we take offset from full match, index 0
+        } else {
+          break;
+        }
+      }
+      $players_html = substr($players_html, $round_offset);
+    }
+
     // Read each player row
-    if (preg_match_all('/<tr[^>]*>[\s]*<th [^>]*class="bg-[^>]*>/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/<tr [^>]*>/', $players_html, $hits, PREG_OFFSET_CAPTURE)) {
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) {
         $offsets_tmp[] = $hit[1];
@@ -767,9 +786,9 @@ function parse_groups($html)
       for ($j = 0; $j < count($offsets_tmp); $j++) {
         $offset_start = $offsets_tmp[$j];
         if (isset($offsets_tmp[$j + 1])) {
-          $html_slice_tmp = substr($html_slice, $offset_start, $offsets_tmp[$j + 1] - $offset_start);
+          $html_slice_tmp = substr($players_html, $offset_start, $offsets_tmp[$j + 1] - $offset_start);
         } else {
-          $html_slice_tmp = substr($html_slice, $offset_start);
+          $html_slice_tmp = substr($players_html, $offset_start);
         }
 
         $table_end = strpos($html_slice_tmp, '</table>');
@@ -780,7 +799,7 @@ function parse_groups($html)
         $advance = $position = $country = $country_short = $race = $name = $match_score = $map_score = null;
         $offset = 0;
 
-        $advance = preg_match('/<td [^>]*class="grouptableslot[^"]*bg-up/', $html_slice_tmp);
+        $advance = preg_match('/<td [^>]*class="grouptableslot[^"]*bg-up|<tr class="[^"]*bg-up/', $html_slice_tmp);
 
         set_value($position, $offset, '/<th [^>]*>\s*(\d+)/', $html_slice_tmp);
         if ($group_finished && strlen($position) == 0) $group_finished = false;
@@ -826,7 +845,7 @@ function parse_groups($html)
     }
 
     // Read each match row
-    if (preg_match_all('/<tr[^>]*class="match-row ?[^"]*">/', $html_slice, $hits, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/<tr[^>]*class="match-row ?[^"]*">/', $matches_html, $hits, PREG_OFFSET_CAPTURE)) {
 
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) {
@@ -835,9 +854,9 @@ function parse_groups($html)
       for ($j = 0; $j < count($offsets_tmp); $j++) {
         $offset_start = $offsets_tmp[$j];
         if (isset($offsets_tmp[$j + 1])) {
-          $html_slice_tmp = substr($html_slice, $offset_start, $offsets_tmp[$j + 1] - $offset_start);
+          $html_slice_tmp = substr($matches_html, $offset_start, $offsets_tmp[$j + 1] - $offset_start);
         } else {
-          $html_slice_tmp = substr($html_slice, $offset_start);
+          $html_slice_tmp = substr($matches_html, $offset_start);
         }
 
         $winner = $name1 = $name2 = $id1 = $id2 = $score1 = $score2 = null;
