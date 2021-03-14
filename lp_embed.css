@@ -1,307 +1,441 @@
-body, html {
-margin:0;
-padding:0;
-font-size: 11px;
-font-family: Verdana;
--webkit-touch-callout: none;
--webkit-user-select: none;
--khtml-user-select: none;
--moz-user-select: none;
--ms-user-select: none;
-user-select: none;
+body,
+html {
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+  font-family: Verdana;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 /* Brackets */
 .forum_bracket {
-clear: both;
+  clear: both;
 }
 .forum_bracket_size_1 {
-width: 160px; /* (X * 180) - 20 */
+  width: 160px; /* (X * 180) - 20 */
 }
-.forum_bracket_size_2{
-width: 340px;
+.forum_bracket_size_1.lower_forum_bracket {
+  width: 185px;
+}
+.forum_bracket_size_2 {
+  width: 340px;
+}
+.forum_bracket_size_2.lower_forum_bracket {
+  width: 365px;
 }
 .forum_bracket_size_3 {
-width: 520px;
+  width: 520px;
+}
+.forum_bracket_size_3.lower_forum_bracket {
+  width: 545px;
 }
 .forum_bracket_size_4 {
-width: 700px;
+  width: 700px;
+}
+.forum_bracket_size_4.lower_forum_bracket {
+  width: 725px;
 }
 .forum_bracket_size_5 {
-width: 880px;
+  width: 880px;
+}
+.forum_bracket_size_5.lower_forum_bracket {
+  width: 905px;
 }
 .forum_bracket_size_6 {
-width: 1060px;
+  width: 1060px;
+}
+.forum_bracket_size_6.lower_forum_bracket {
+  width: 1085px;
 }
 .forum_bracket_size_7 {
-width: 1240px;
+  width: 1240px;
+}
+.forum_bracket_size_7.lower_forum_bracket {
+  width: 1265px;
 }
 .forum_bracket_best_of td {
-padding-right: 0.5em;
+  padding-right: 0.5em;
 }
 .forum_brackets_view {
-float: left;
+  float: left;
 }
 .forum_bracket_ro_links {
-text-align: center;
-padding: 1em 0;
-clear: both;
+  text-align: center;
+  padding: 1em 0;
+  clear: both;
 }
 .forum_bracket_round {
-float: left;
-width: 180px;
-line-height: 21px;
+  float: left;
+  width: 180px;
+  line-height: 21px;
 }
 .forum_bracket_round_last {
-width: 160px !important;
+  width: 160px !important;
 }
 .forum_bracket_line_join {
-border: 2px solid black;
-border-left: none;
-width: 7px;
-float: right;
-margin-right: 8px;
+  border: 2px solid black;
+  border-left: none;
+  width: 7px;
+  float: right;
+  margin-right: 8px;
 }
 .forum_bracket_line_vertical {
-border-top: 2px solid black;
-width: 6px;
-float: right;
-height: 1px;
+  border-top: 2px solid black;
+  width: 6px;
+  float: right;
+  height: 1px;
 }
 .forum_bracket_round_name {
-height: 2em;
-text-align: center;
-margin-top: 0.5em;
-font-weight: bold;
-padding-right: 20px;
+  height: 2em;
+  text-align: center;
+  margin-top: 0.5em;
+  font-weight: bold;
+  padding-right: 20px;
 }
 .forum_bracket_round_winner {
-width: 130px;
-float: left;
-line-height: 21px;
+  width: 130px;
+  float: left;
+  line-height: 21px;
 }
 .forum_bracket_winner {
-font-weight: bold;
+  font-weight: bold;
 }
 .forum_bracket_empty_name {
-color: #AAA;
+  color: #aaa;
 }
 .forum_bracket_score {
-float: right;
+  float: right;
 }
 .forum_bracket_round .forum_bracket_odd .forum_bracket_contestant {
-background: #EED;
+  background: #eed;
 }
 .forum_bracket_round .forum_bracket_even .forum_bracket_contestant {
-background: #DEE;
+  background: #dee;
 }
 .forum_bracket_match {
-width: 160px;
+  width: 160px;
 }
 .forum_bracket_round .forum_bracket_match .forum_bracket_contestant {
-color: #000;
--moz-border-radius: 5px 0 0px 5px;
--khtml-border-radius:  5px 0 0px 5px;
--webkit-border-radius:  5px 0 0px 5px;
-border-radius:  5px 0 0px 5px;
-height: 24px;
-padding: 5px 0 0 5px;
-margin-bottom: 20px;
+  color: #000;
+  -moz-border-radius: 5px 0 0px 5px;
+  -khtml-border-radius: 5px 0 0px 5px;
+  -webkit-border-radius: 5px 0 0px 5px;
+  border-radius: 5px 0 0px 5px;
+  height: 24px;
+  padding: 5px 0 0 5px;
+  margin-bottom: 20px;
 }
 .forum_bracket_match .forum_bracket_contestant:nth-child(1) {
-margin-bottom: 2px;
+  margin-bottom: 2px;
 }
 .forum_bracket_round .forum_bracket_match .forum_bracket_name {
-width: 135px;
-height: 29px;
-display: block;
-overflow: hidden;
-word-break: break-all;
+  width: 135px;
+  height: 29px;
+  display: block;
+  overflow: hidden;
+  word-break: break-all;
 }
 .forum_bracket_round .forum_bracket_match .forum_bracket_score {
-width: 20px;
-height: 100%;
-padding-top: 5px;
-margin-top: -5px;
-text-align: center;
-font-weight: bold;
-background: #008ebf;
-color: #FFF;
+  width: 20px;
+  height: 100%;
+  padding-top: 5px;
+  margin-top: -5px;
+  text-align: center;
+  font-weight: bold;
+  background: #008ebf;
+  color: #fff;
 }
 .forum_bracket_match_winner .forum_bracket_score {
-background: #74a333 !important;
+  background: #74a333 !important;
 }
 .forum_bracket_round_1 .forum_bracket_match {
-padding: 0px 0px;
+  padding: 0px 0px;
 }
 .forum_bracket_round_2 .forum_bracket_match {
-padding: 40px 0px;
+  padding: 40px 0px;
 }
 .forum_bracket_round_3 .forum_bracket_match {
-padding: 120px 0px;
+  padding: 120px 0px;
 }
 .forum_bracket_round_4 .forum_bracket_match {
-padding: 280px 0px;
+  padding: 280px 0px;
 }
 .forum_bracket_round_5 .forum_bracket_match {
-padding: 600px 0px;
+  padding: 600px 0px;
 }
 .forum_bracket_round_6.forum_bracket_match {
-padding: 1240px 0px;
+  padding: 1240px 0px;
 }
 .forum_bracket_round_7.forum_bracket_match {
-padding: 2520px 0px;
+  padding: 2520px 0px;
 }
 .forum_bracket_round_last .forum_bracket_match {
-padding-bottom: 0;
+  padding-bottom: 0;
 }
 .forum_bracket_bronze_3 .forum_bracket_match,
 .forum_bracket_bronze_4 .forum_bracket_match,
 .forum_bracket_bronze_5 .forum_bracket_match {
-padding: 0;
+  padding: 0;
 }
 .forum_bracket_bronze_3 {
-margin-top: 0px;
+  margin-top: 0px;
 }
 .forum_bracket_bronze_4 {
-margin-top: 38px;
+  margin-top: 38px;
 }
 .forum_bracket_bronze_5 {
-margin-top: 198px;
+  margin-top: 198px;
 }
 .forum_bracket_round .forum_bracket_match:last-child {
-padding-bottom: 0px;
+  padding-bottom: 0px;
+}
+.forum_bracket_round .forum_bracket_line_vertical.to_grand_final {
+  margin: -25px 2px 0 0;
+}
+.forum_bracket_round .forum_bracket_line_join.to_grand_final {
+  border-bottom: none;
+}
+.forum_bracket_round .forum_bracket_line_join.to_grand_final_bottom {
+  height: 30px;
+  width: 7px;
+  margin: 5px 2px 0 0;
+  border: 2px dotted black;
+  border-right: none;
+  border-bottom: none;
 }
 .forum_bracket_round_1 .forum_bracket_line_join {
-height: 79px;
-margin-top: -51px;
+  height: 79px;
+  margin-top: -51px;
+}
+.forum_bracket_round_1 .forum_bracket_line_join.to_grand_final {
+  height: 26px;
 }
 .forum_bracket_round_2 .forum_bracket_line_join {
-height: 158px;
-margin-top: -89px;
+  height: 158px;
+  margin-top: -89px;
+}
+.forum_bracket_round_2 .forum_bracket_line_join.to_grand_final {
+  height: 66px;
 }
 .forum_bracket_round_3 .forum_bracket_line_join {
-height: 318px;
-margin-top: -169px;
+  height: 318px;
+  margin-top: -169px;
+}
+.forum_bracket_round_3 .forum_bracket_line_join.to_grand_final {
+  height: 146px;
 }
 .forum_bracket_round_4 .forum_bracket_line_join {
-height: 638px;
-margin-top: -330px;
+  height: 638px;
+  margin-top: -3 30px;
+}
+.forum_bracket_round_4 .forum_bracket_line_join.to_grand_final {
+  height: 305px;
 }
 .forum_bracket_line_vertical {
-margin: -10px -15px 0 0;
+  margin: -10px -15px 0 0;
+}
+/* Lower Bracket */
+.lower_forum_bracket .forum_bracket_stage_1 .forum_bracket_line_vertical {
+  margin: -35px 1px 0 0;
+  width: 7px;
+}
+.lower_forum_bracket .forum_bracket_stage_1 .forum_bracket_line_join {
+  border-bottom: none;
+  height: 16px;
+}
+.lower_forum_bracket
+  .forum_bracket_stage_1
+  .forum_bracket_line_join.from_upper_bracket {
+  border: 2px dotted black;
+  border-right: none;
+  border-top: none;
+  height: 20px;
+}
+.lower_forum_bracket
+  .forum_bracket_round_1.forum_bracket_stage_1
+  .forum_bracket_line_join.from_upper_bracket {
+  margin: -84px 0px 0 0;
+}
+.lower_forum_bracket
+  .forum_bracket_round_2.forum_bracket_stage_1
+  .forum_bracket_line_join.from_upper_bracket {
+  margin: -124px 0px 0 0;
+}
+.lower_forum_bracket
+  .forum_bracket_round_3.forum_bracket_stage_1
+  .forum_bracket_line_join.from_upper_bracket {
+  margin: -204px 0px 0 0;
+}
+.lower_forum_bracket
+  .forum_bracket_round_2.forum_bracket_stage_1
+  .forum_bracket_line_join {
+  margin-top: -91px;
+}
+.lower_forum_bracket
+  .forum_bracket_round_2.forum_bracket_stage_1
+  .forum_bracket_line_vertical {
+  margin: -75px 1px 0 0;
+}
+.lower_forum_bracket
+  .forum_bracket_round_3.forum_bracket_stage_1
+  .forum_bracket_line_vertical {
+  margin: -155px 1px 0 0;
+}
+.lower_forum_bracket .forum_bracket_line_join.to_grand_final {
+  height: 34px;
+  border: 2px dotted black;
+  border-left: none;
+  border-top: none;
+}
+.lower_forum_bracket
+  .forum_bracket_round_1.forum_bracket_stage_2
+  .forum_bracket_line_join.to_grand_final {
+  margin-top: -85px;
+}
+.lower_forum_bracket
+  .forum_bracket_round_2.forum_bracket_stage_2
+  .forum_bracket_line_join.to_grand_final {
+  margin-top: -125px;
+}
+.lower_forum_bracket
+  .forum_bracket_round_3.forum_bracket_stage_2
+  .forum_bracket_line_join.to_grand_final {
+  margin-top: -205px;
+}
+.lower_forum_bracket .forum_bracket_round_1 .forum_bracket_match {
+  padding: 0px 0px;
+}
+.lower_forum_bracket .forum_bracket_round_2 .forum_bracket_match {
+  padding: 40px 0px;
+}
+.lower_forum_bracket .forum_bracket_round_3 .forum_bracket_match {
+  padding: 120px 0px;
+}
+.lower_forum_bracket .forum_bracket_round_4 .forum_bracket_match {
+  padding: 280px 0px;
+}
+.lower_forum_bracket .forum_bracket_round_5 .forum_bracket_match {
+  padding: 60px 0px;
 }
 /* Ro12 bracket */
 .forum_bracket_ro_12 .forum_bracket_round_1 .forum_bracket_line_vertical {
-margin: -35px 1px 0 0;
-width: 7px;
+  margin: -35px 1px 0 0;
+  width: 7px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_2 .forum_bracket_line_vertical {
-margin: -10px -15px 0 0;
+  margin: -10px -15px 0 0;
 }
 .forum_bracket_ro_12 .forum_bracket_round_1 .forum_bracket_line_join {
-border-bottom: none;
-height: 16px;
+  border-bottom: none;
+  height: 16px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_2 .forum_bracket_line_join {
-height: 79px;
-margin-top: -51px;
+  height: 79px;
+  margin-top: -51px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_3 .forum_bracket_line_join {
-height: 158px;
-margin-top: -89px;
+  height: 158px;
+  margin-top: -89px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_1 .forum_bracket_match,
 .forum_bracket_ro_12 .forum_bracket_round_2 .forum_bracket_match {
-padding: 0px 0px;
+  padding: 0px 0px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_3 .forum_bracket_match {
-padding: 40px 0px;
+  padding: 40px 0px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_4 .forum_bracket_match {
-padding: 120px 0px;
+  padding: 120px 0px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_5 .forum_bracket_match {
-padding: 280px 0px;
+  padding: 280px 0px;
 }
 .forum_bracket_ro_12 .forum_bracket_round_6 .forum_bracket_match {
-padding: 60px 0px;
+  padding: 60px 0px;
 }
 /* Groups */
 a {
-color: #0606B7;
+  color: #0606b7;
 }
 table {
-border-collapse: collapse;
+  border-collapse: collapse;
 }
 td {
-padding: 0;
+  padding: 0;
 }
 div.groups {
-clear: both;
-width: 640px;
+  clear: both;
+  width: 640px;
 }
 div.group {
-width: 200px;
-float: left;
-margin: 15px 20px 10px 0px;
+  width: 200px;
+  float: left;
+  margin: 15px 20px 10px 0px;
 }
 div.group.right {
-margin-right: 0px;
+  margin-right: 0px;
 }
-table.group_players, table.group_matches {
-width: 100%;
+table.group_players,
+table.group_matches {
+  width: 100%;
 }
 tr.group_player td {
-padding: 1px 0;
+  padding: 1px 0;
 }
 th.group_name {
-border-bottom: 1px solid #666;
-text-align: left;
+  border-bottom: 1px solid #666;
+  text-align: left;
 }
 span.group_time {
-font-weight: normal;
-float: right;
+  font-weight: normal;
+  float: right;
 }
 td.first_player_row {
-padding-top: 3px !important;
+  padding-top: 3px !important;
 }
-td.player_match_score, td.player_map_score {
-width: 35px;
-text-align: center;
+td.player_match_score,
+td.player_map_score {
+  width: 35px;
+  text-align: center;
 }
-td.player_match_score{
-width: 32px;
+td.player_match_score {
+  width: 32px;
 }
 td.player_map_score {
-width: 35px;
+  width: 35px;
 }
 td.matches_name.left {
-text-align: right;
+  text-align: right;
 }
 td.matches_name {
-width: 85px;
+  width: 85px;
 }
 td.matches_score {
-width: 15px;
-text-align: center;
+  width: 15px;
+  text-align: center;
 }
 .group_row {
-clear: both;
+  clear: both;
 }
 td.player_position {
-width: 10px;
+  width: 10px;
 }
 .show_button {
-text-decoration: none;
+  text-decoration: none;
 }
-table.group_crosstable td, table.group_crosstable th {
-padding: 0 5px;
-text-align: center;
-min-width: 30px;
+table.group_crosstable td,
+table.group_crosstable th {
+  padding: 0 5px;
+  text-align: center;
+  min-width: 30px;
 }
 table.group_crosstable thead th {
-text-align: left;
+  text-align: left;
 }
 table.group_crosstable tbody tr th:nth-child(1) {
-text-align: right;
+  text-align: right;
 }

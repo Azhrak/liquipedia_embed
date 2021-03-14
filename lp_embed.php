@@ -121,8 +121,7 @@ if (!$use_cache || !file_exists($cachefile . $suffix) || (time() - filemtime($ca
 }
 
 if ($debug) {
-  print_r($embeds);
-  die;
+  debug($embeds);
 }
 
 
@@ -131,7 +130,7 @@ if ($mode == 'bracket') {
   if (isset($embeds['brackets'])) $brackets = $embeds['brackets'];
   if (empty($brackets)) die(BRACKET_NOT_FOUND);
   $bracket = (isset($brackets[$bracket_number - 1])) ? $brackets[$bracket_number - 1] : $brackets[0];
-  // print_r($bracket); die;
+  // debug($bracket);
 ?>
   <!DOCTYPE HTML>
   <html>
@@ -169,85 +168,55 @@ if ($mode == 'bracket') {
   </head>
 
   <body>
-    <?php
-    $round_count = 1;
-    $prev_round = null;
-    ?>
+    <?php $round_count = 0; ?>
+    <?php $has_grand_final = isset($bracket['rounds']['grand_final']) && !empty($bracket['rounds']['grand_final']); ?>
     <?php if (!empty($bracket)) : ?>
       <div class="forum_bracket <?php echo 'forum_bracket_size_' . count($bracket['rounds']); ?> <?php echo 'forum_bracket_ro_' . array_keys($bracket['rounds'])[0]; ?>">
         <?php foreach ($bracket['rounds'] as $round => $matches) : ?>
-          <?php if (!empty($ro_start) && $round != 'bronze' && $ro_start < $round) continue; ?>
-          <?php if (!empty($ro_end) && $round != 'bronze' && $round < $ro_end) continue; ?>
+          <?php if (!empty($ro_start) && is_numeric($round) && $ro_start < $round) continue; ?>
+          <?php if (!empty($ro_end) && is_numeric($round) && $round < $ro_end) continue; ?>
 
-          <?php if (empty($prev_round)) : ?>
-            <div class="forum_bracket_round forum_bracket_round_<?php echo $round_count++; ?>">
-              <div class="forum_bracket_round_name">
-                <?php echo round_name($round) ?>
-              </div>
-              <?php $prev_round = $round; ?>
-            <?php elseif ($round == 'bronze') : ?>
-              <div class="forum_bracket_bronze_<?php echo $round_count ?>">
-                <div class="forum_bracket_round_name">
-                  <?php echo round_name($round) ?>
-                </div>
-              <?php elseif ($round != $prev_round) : ?>
-              </div>
-              <?php $last_round = ($round == 2) ? 'forum_bracket_round_last' : '' ?>
-              <div class="forum_bracket_round forum_bracket_round_<?php echo $round_count++ . ' ' . $last_round ?>">
-                <div class="forum_bracket_round_name">
-                  <?php echo round_name($round) ?>
-                </div>
-              <?php else :
-              $prev_round = $round;
-            endif; ?>
+          <?php $last_round = (($round == 2 && !$has_grand_final) || $round == 'grand_final') ? 'forum_bracket_round_last' : '';
+          $round_count++;
+          $class = 'forum_bracket_round forum_bracket_round_' . $round_count;
+          if ($round == 'bronze') {
+            $class = 'forum_bracket_bronze_' . $round_count;
+          } ?>
 
-              <?php foreach ($matches as $i => $match) : ?>
-                <div class="forum_bracket_match forum_bracket_<?php echo ($i % 2 == 0) ? 'even' : 'odd' ?>">
-
-                  <div class="forum_bracket_contestant">
-                    <span class="forum_bracket_score"><?php echo $match['player1']['score'] ?></span>
-
-                    <span class="forum_bracket_name">
-                      <?php if (!empty($match['player1']['country_short'])) : ?>
-                        <img src="<?php echo SMILIES_DIR . $match['player1']['country_short'] ?>.gif" title="<?php echo $match['player1']['country'] ?>">
-                      <?php endif; ?>
-                      <?php if (!empty($match['player1']['race'])) : ?>
-                        <img src="<?php echo race_icon($match['player1']['race']) ?>" title="<?php echo $match['player1']['race'] ?>">
-                      <?php endif; ?>
-                      <?php echo ($match['player1']['winner']) ? '<strong>' . $match['player1']['name'] . '</strong>' : $match['player1']['name'] ?>
-                    </span>
-                  </div>
-
-                  <div class="forum_bracket_contestant">
-                    <span class="forum_bracket_score"><?php echo $match['player2']['score'] ?></span>
-
-                    <span class="forum_bracket_name">
-                      <?php if (!empty($match['player2']['country_short'])) : ?>
-                        <img src="<?php echo SMILIES_DIR . $match['player2']['country_short'] ?>.gif" title="<?php echo $match['player2']['country'] ?>">
-                      <?php endif; ?>
-                      <?php if (!empty($match['player2']['race'])) : ?>
-                        <img src="<?php echo race_icon($match['player2']['race']) ?>" title="<?php echo $match['player2']['race'] ?>">
-                      <?php endif; ?>
-                      <?php echo ($match['player2']['winner']) ? '<strong>' . $match['player2']['name'] . '</strong>' : $match['player2']['name'] ?>
-                    </span>
-                  </div>
-
-                </div>
-                <?php if ($round == 'bronze') : ?>
-              </div>
-            <?php elseif ($round == 12) : ?>
-              <div class="forum_bracket_line_join"></div>
-              <div class="forum_bracket_line_vertical"></div>
-            <?php elseif ($i < count($matches) - 1 && $i % 2 == 0) : ?>
-              <div class="forum_bracket_line_join"></div>
-              <div class="forum_bracket_line_vertical"></div>
-            <?php endif; ?>
-          <?php endforeach; ?>
-
-        <?php endforeach; ?>
+          <div class="<?php echo $class . ' ' . $last_round ?>">
+            <div class="forum_bracket_round_name">
+              <?php echo round_name($round, $bracket['lb_rounds']) ?>
             </div>
+
+            <?php print_bracket_matches($matches, $round, false, 1, $has_grand_final); ?>
+          </div>
+        <?php endforeach; ?>
       </div>
       <div style="clear:both"></div>
+
+      <?php if ($bracket['lb_rounds']) : ?>
+        <?php $round_count = 0; ?>
+        <div class="forum_bracket lower_forum_bracket <?php echo 'forum_bracket_size_' . (count($bracket['lb_rounds']) * 2); ?> forum_bracket<?php echo array_keys($bracket['rounds'])[0] ?>_lower">
+          <?php foreach ($bracket['lb_rounds'] as $round => $stages) : ?>
+            <?php $round_count++; ?>
+            <?php foreach ($stages as $stage => $matches) : ?>
+              <?php if (!empty($ro_start) && is_numeric($round) && $ro_start < $round) continue; ?>
+              <?php if (!empty($ro_end) && is_numeric($round) && $round < $ro_end) continue; ?>
+
+              <div class="forum_bracket_round forum_bracket_round_<?php echo $round_count; ?> forum_bracket_stage_<?php echo $stage ?>">
+                <div class="forum_bracket_round_name">
+                  <?php echo 'RO' . $round . ', S' . $stage ?>
+                </div>
+
+                <?php print_bracket_matches($matches, $round, true, $stage); ?>
+              </div>
+
+            <?php endforeach; ?>
+          <?php endforeach; ?>
+        </div>
+        <div style="clear:both"></div>
+      <?php endif; ?>
+
     <?php endif; ?>
   </body>
 
@@ -258,7 +227,7 @@ if ($mode == 'bracket') {
 // PRINT GROUPS
 elseif ($mode == 'group') {
   if (isset($embeds['groups'])) $groups = $embeds['groups'];
-  // print_r($groups);die;
+  // debug($groups);
   if (empty($groups)) die(GROUP_NOT_FOUND);
   $groups = (isset($groups[$group_stage - 1])) ? $groups[$group_stage - 1] : $groups[0];
 ?>
@@ -435,6 +404,62 @@ elseif ($mode == 'group') {
 
 <?php } ?>
 <?php
+function print_bracket_matches($matches, $round, $lower_bracket = false, $stage = 1, $has_grand_final = false)
+{
+  foreach ($matches as $i => $match) : ?>
+    <div class="forum_bracket_match forum_bracket_<?php echo ($i % 2 == 0) ? 'even' : 'odd' ?>">
+
+      <div class="forum_bracket_contestant">
+        <span class="forum_bracket_score"><?php echo $match['player1']['score'] ?></span>
+
+        <span class="forum_bracket_name">
+          <?php if (!empty($match['player1']['country_short'])) : ?>
+            <img src="<?php echo SMILIES_DIR . $match['player1']['country_short'] ?>.gif" title="<?php echo $match['player1']['country'] ?>">
+          <?php endif; ?>
+          <?php if (!empty($match['player1']['race'])) : ?>
+            <img src="<?php echo race_icon($match['player1']['race']) ?>" title="<?php echo $match['player1']['race'] ?>">
+          <?php endif; ?>
+          <?php echo ($match['player1']['winner']) ? '<strong>' . $match['player1']['name'] . '</strong>' : $match['player1']['name'] ?>
+        </span>
+      </div>
+
+      <div class="forum_bracket_contestant">
+        <span class="forum_bracket_score"><?php echo $match['player2']['score'] ?></span>
+
+        <span class="forum_bracket_name">
+          <?php if (!empty($match['player2']['country_short'])) : ?>
+            <img src="<?php echo SMILIES_DIR . $match['player2']['country_short'] ?>.gif" title="<?php echo $match['player2']['country'] ?>">
+          <?php endif; ?>
+          <?php if (!empty($match['player2']['race'])) : ?>
+            <img src="<?php echo race_icon($match['player2']['race']) ?>" title="<?php echo $match['player2']['race'] ?>">
+          <?php endif; ?>
+          <?php echo ($match['player2']['winner']) ? '<strong>' . $match['player2']['name'] . '</strong>' : $match['player2']['name'] ?>
+        </span>
+      </div>
+
+    </div>
+    <?php if ($round == 'bronze') : ?>
+      </div>
+    <?php elseif ($round == 12) : ?>
+      <div class="forum_bracket_line_join"></div>
+      <div class="forum_bracket_line_vertical"></div>
+    <?php elseif ($lower_bracket && $stage == 1) : ?>
+      <div class="forum_bracket_line_join from_upper_bracket"></div>
+      <div class="forum_bracket_line_join"></div>
+      <div class="forum_bracket_line_vertical"></div>
+    <?php elseif ($lower_bracket && $stage == 2 && $round == 2) : ?>
+      <div class="forum_bracket_line_join to_grand_final"></div>
+    <?php elseif ($has_grand_final && $round == 2) : ?>
+      <div class="forum_bracket_line_join to_grand_final"></div>
+      <div class="forum_bracket_line_vertical to_grand_final"></div>
+      <div class="forum_bracket_line_join to_grand_final_bottom"></div>
+    <?php elseif ($i < count($matches) - 1 && $i % 2 == 0) : ?>
+      <div class="forum_bracket_line_join"></div>
+      <div class="forum_bracket_line_vertical"></div>
+    <?php endif; ?>
+<?php endforeach;
+}
+
 function parse_brackets($html)
 {
   global $debug;
@@ -467,13 +492,13 @@ function parse_brackets($html)
 
     $bracket_finished = true;
 
-    if (preg_match('/div class="bracket-column"/', $html_slice)) { // New bracket format, with DIVs
+    if (preg_match('/div class="bracket-column[" ]/', $html_slice)) { // New bracket format, with DIVs
 
       $pattern = '/bracket-cell-[^>]+>[\s\S]*?bracket-score[^>]+>[^<]*/i';
       preg_match_all($pattern, $html_slice, $matches);
-      // print_r($matches); die;
+      // debug($matches);
 
-      $players = $rounds = $bracket = array();
+      $players = $rounds = $lb_rounds = $bracket = array();
       $winner_count = 0;
       for ($i = 0; $i < count($matches[0]); $i++) {
         $match = $matches[0][$i];
@@ -502,7 +527,6 @@ function parse_brackets($html)
           if ($hit[1] == 'DDDDDD') $name = BYE_NAME;
         }
 
-        // if (!empty($race)) {
         preg_match('/src="[^"]+?\/([\w]{2})(?:_hd)\.\w{3}"/', $match, $hit);
         $country_short = (isset($hit[1])) ? trim(strtolower($hit[1])) : $country_short;
         preg_match('/title="([^"]+)"/', $match, $hit);
@@ -515,7 +539,6 @@ function parse_brackets($html)
         $name = (isset($hit[1]) && !empty($hit[1])) ? trim($hit[1]) : $name;
         preg_match('/bracket-score[^>]+>([\d]+)/', $match, $hit);
         $score = (isset($hit[1])) ? $hit[1] : $score;
-        // }
 
         if ($country_short == 'uk') $country_short = 'gb';
         if ($name == 'TBD') $name = EMPTY_NAME;
@@ -530,18 +553,22 @@ function parse_brackets($html)
         );
         $players[] = $player;
       }
-      // print_r($players); die;
-      // print_r($scores);die;
+      // debug($players);
+      // debug($scores);
 
       $bronze_match = array();
-      if (count($players) % 8 == 0) { // bronze match
+      $lb_players = array();
+      $grand_final = array();
+
+      if ($max_round_of = double_elim_max_round_of(count($players) / 2)) {
+        $lb_max_round_of = $max_round_of / 2;
+        $lb_players = array_splice($players, count($players) / 2);
+        $gf_players = array_splice($lb_players, -2);
+        $grand_final = array('player1' => $gf_players[0], 'player2' => $gf_players[1]);
+      } else if (count($players) % 8 == 0) { // bronze match
         $max_round_of = (count($players) / 2);
-        $player1 = $players[count($players) - 2];
-        $player2 = $players[count($players) - 1];
-        unset($players[count($players) - 2]);
-        unset($players[count($players) - 1]);
-        $players = array_slice($players, 0);
-        $bronze_match = array('player1' => $player1, 'player2' => $player2);
+        $bronze_players = array_splice($players, -2);
+        $bronze_match = array('player1' => $bronze_players[0], 'player2' => $bronze_players[1]);
       } else {
         $max_round_of = (count($players) / 2) + 1;
       }
@@ -568,11 +595,30 @@ function parse_brackets($html)
           $round_counter = 0;
         }
       }
+
+      if ($lb_players) {
+        $round_of = $lb_max_round_of;
+        $stage = 1;
+        for ($i = 0; $i < count($lb_players) - 1; $i += 2) {
+          $lb_rounds[$round_of][$stage][] = array('player1' => $lb_players[$i], 'player2' => $lb_players[$i + 1]);
+          $round_counter += 2;
+          if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
+            if ($stage == 2) {
+              $round_of = pow(2, ceil(log($round_of, 2))) / 2;
+              $round_counter = 0;
+              $stage = 1;
+            } else {
+              $stage = 2;
+              $round_counter = 0;
+            }
+          }
+        }
+      }
     } else { // Old bracket format, with TABLE
 
       $pattern = '/bgcolor="#?(F2B8B8|B8F2B8|B8B8F2|DDDDDD|F2F2F2|)" rowspan="2"[^>]*>([^<]*)(?:(?:<[^>]*>){3}&#160;(?:<b>)?[^<]+)?/i';
       preg_match_all($pattern, $html_slice, $matches);
-      // print_r($matches);die;
+      // debug($matches);
 
       $players = $scores = $rounds = $bracket = array();
       for ($i = 0; $i < count($matches[0]); $i++) {
@@ -628,8 +674,8 @@ function parse_brackets($html)
           if ($bracket_finished && $name == EMPTY_NAME) $bracket_finished = false;
         }
       }
-      // print_r($players);die;
-      // print_r($scores);die;
+      // debug($players);
+      // debug($scores);
 
       $bronze_match = array();
       if (count($players) % 8 == 0) { // bronze match
@@ -666,13 +712,15 @@ function parse_brackets($html)
     }
 
     if (!empty($bronze_match)) $rounds['bronze'][] = $bronze_match;
+    if (!empty($grand_final)) $rounds['grand_final'][] = $grand_final;
 
     $bracket = array(
       'rounds' => $rounds,
+      'lb_rounds' => $lb_rounds,
       'finished' =>  $bracket_finished
     );
 
-    // print_r($bracket);die;
+    // debug($bracket);
 
     $brackets[] = $bracket;
   }
@@ -688,7 +736,7 @@ function parse_groups($html)
     // echo "No groups found.";
     return array();
   }
-  // print_r($matches);die;
+  // debug($matches);
 
   $offsets = array();
   if (isset($matches[0][0][1])) {
@@ -918,7 +966,7 @@ function parse_groups($html)
           'score2' => $score2,
           'winner' => $winner
         );
-        // print_r($match);die;
+        // debug($match);
 
         $matches[] = $match;
       }
@@ -958,7 +1006,7 @@ function parse_groups($html)
     }
   }
 
-  // print_r($groups);die;
+  // debug($groups);
   return $groups;
 }
 
@@ -1210,17 +1258,20 @@ function parse_crosstables($html)
 }
 
 
-function round_name($round)
+function round_name($round, $has_lower_bracket)
 {
+  $prefix = $has_lower_bracket ? 'UB' : '';
   switch ($round) {
     case 2:
-      return FINAL_MATCH;
+      return $prefix . ' ' . FINAL_MATCH;
     case 4:
-      return SEMIFINAL_MATCH;
+      return $prefix . ' ' . SEMIFINAL_MATCH;
     case 'bronze':
       return BRONZE_MATCH;
+    case 'grand_final':
+      return GRAND_FINAL;
   }
-  return "RO" . $round;
+  return $prefix . ' ' . "RO" . $round;
 }
 
 
@@ -1374,4 +1425,24 @@ function sort_by_time($a, $b)
     return 0;
   }
   return ($a['time'] < $b['time']) ? -1 : 1;
+}
+
+
+function debug($value, $die = true)
+{
+  print_r($value);
+  if ($die) {
+    die;
+  }
+}
+
+
+function double_elim_max_round_of($match_count)
+{
+  for ($i = 2; $i < $match_count; $i++) {
+    if ((pow(2, $i) - 1) * 2 == $match_count) {
+      return pow(2, $i);
+    }
+  }
+  return 0;
 }
