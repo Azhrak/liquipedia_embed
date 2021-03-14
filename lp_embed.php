@@ -556,13 +556,14 @@ function parse_brackets($html)
       // debug($players);
       // debug($scores);
 
+      $players_count = count($players);
       $bronze_match = array();
       $lb_players = array();
       $grand_final = array();
 
-      if ($max_round_of = double_elim_max_round_of(count($players) / 2)) {
+      if ($max_round_of = double_elim_max_round_of($players_count / 2)) {
         $lb_max_round_of = $max_round_of / 2;
-        $lb_players = array_splice($players, count($players) / 2);
+        $lb_players = array_splice($players, $players_count / 2);
         $gf_players = array_splice($lb_players, -2);
         $grand_final = array('player1' => $gf_players[0], 'player2' => $gf_players[1]);
       } else if (count($players) % 8 == 0) { // bronze match
@@ -570,10 +571,10 @@ function parse_brackets($html)
         $bronze_players = array_splice($players, -2);
         $bronze_match = array('player1' => $bronze_players[0], 'player2' => $bronze_players[1]);
       } else {
-        $max_round_of = (count($players) / 2) + 1;
+        $max_round_of = ($players_count / 2) + 1;
       }
 
-      $bracket_finished = ($bracket_finished && count($players) / 2 <= $winner_count);
+      $bracket_finished = ($bracket_finished && $players_count / 2 <= $winner_count);
 
       $round_of = $max_round_of;
       $round_counter = 0;
