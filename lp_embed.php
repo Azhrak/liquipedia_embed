@@ -464,7 +464,7 @@ function parse_brackets($html)
 {
   global $debug;
 
-  if (!preg_match_all('/class="bracket(?:"| [^"]+")/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
+  if (!preg_match_all('/class="(?:\w+-)bracket(?:"| [^"]+")/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
     if (!preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals/', $html, $matches, PREG_OFFSET_CAPTURE, 10000)) {
       // echo "Error: No bracket found.";
       return array();
@@ -472,7 +472,7 @@ function parse_brackets($html)
   }
 
   $offsets = array();
-  if (isset($matches[0][0][1])) {
+  if (is_array($matches[0][0]) && isset($matches[0][0][1])) {
     foreach ($matches[0] as $match) {
       $offsets[] = $match[1];
     }
@@ -492,7 +492,10 @@ function parse_brackets($html)
 
     $bracket_finished = true;
 
-    if (preg_match('/div class="bracket-column[" ]/', $html_slice)) { // New bracket format, with DIVs
+    if (preg_match('/div class="brkts-round-body[" ]/', $html_slice)) { // Brkts bracket format
+      // TODO parsing
+      return array();
+    } else if (preg_match('/div class="bracket-column[" ]/', $html_slice)) { // Bracket format with DIVs
 
       $pattern = '/bracket-cell-[^>]+>[\s\S]*?bracket-score[^>]+>[^<]*/i';
       preg_match_all($pattern, $html_slice, $matches);
@@ -749,7 +752,7 @@ function parse_groups($html)
   }
 
   // Offset end to Playoffs stage
-  if (!preg_match('/class="bracket[ "]/', $html, $hit, PREG_OFFSET_CAPTURE, 10000)) {
+  if (!preg_match('/class="(?:\w+-)bracket[ "]/', $html, $hit, PREG_OFFSET_CAPTURE, 10000)) {
     preg_match('/id="Playoffs"|id="Brackets?"|bgcolor="#f2f2f2">Finals/', $html, $hit, PREG_OFFSET_CAPTURE, 10000);
   }
   $offset_end = (isset($hit[0][1])) ? $hit[0][1] : strlen($html);
@@ -778,7 +781,7 @@ function parse_groups($html)
         }
       }
       $html_slice = substr($html, $offset_start, $offset_end - $offset_start);
-      if (preg_match('/<\/table>[\s]*<\/div>[\s]*<\/?div/', $html_slice, $hit, PREG_OFFSET_CAPTURE)) {
+      if (preg_match('/<\/table>[\s]*<\/div>[\s]*<\/div/', $html_slice, $hit, PREG_OFFSET_CAPTURE)) {
         $offset_end = (isset($hit[0][1])) ? $hit[0][1] : $offset_end;
         $html_slice = substr($html_slice, 0, $offset_end);
       }
@@ -795,7 +798,7 @@ function parse_groups($html)
     $group_finished = true;
 
     // Read group info
-    preg_match('/<th colspan="\d">.*Group (\w{1,2})\s*/', $html_slice, $hit);
+    preg_match('/<th colspan="\d"[^>]*>.*Group (\w{1,2})\s*/', $html_slice, $hit);
     $group_name = (isset($hit[1])) ? trim($hit[1]) : $group_name;
 
     preg_match('/class="timer-object"[^>]*>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
@@ -894,7 +897,7 @@ function parse_groups($html)
     }
 
     // Read each match row
-    if (preg_match_all('/<tr[^>]*class="match-row ?[^"]*">/', $matches_html, $hits, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/<tr[^>]*class="match-row ?[^"]*"[^>]*>/', $matches_html, $hits, PREG_OFFSET_CAPTURE)) {
 
       $offsets_tmp = array();
       foreach ($hits[0] as $hit) {
@@ -972,6 +975,85 @@ function parse_groups($html)
         $matches[] = $match;
       }
     }
+
+    // Read match rows from new matchlist
+    if (preg_match_all('/<tr[^>]*class="brkts-matchlist-row[^"]*"[^>]*>/', $matches_html, $hits, PREG_OFFSET_CAPTURE)) {
+      $offsets_tmp = array();
+      foreach ($hits[0] as $hit) {
+        $offsets_tmp[] = $hit[1];
+      }
+      for ($j = 0; $j < count($offsets_tmp); $j++) {
+        $offset_start = $offsets_tmp[$j];
+        if (isset($offsets_tmp[$j + 1])) {
+          $html_slice_tmp = substr($matches_html, $offset_start, $offsets_tmp[$j + 1] - $offset_start);
+        } else {
+          $html_slice_tmp = substr($matches_html, $offset_start);
+        }
+
+        $winner = $name1 = $name2 = $id1 = $id2 = $score1 = $score2 = null;
+        $offset = 0;
+
+        if (preg_match_all('/class="[^"]*brkts-opponent-hover\s*[^"]*"/', $html_slice_tmp, $matchlistslots)) {
+          foreach ($matchlistslots[0] as $m_index => $m_value) {
+            if (strpos($m_value, 'slot-winner') !== false) {
+              $winner_index = ceil(count($matchlistslots[0]) / 2) <= $m_index ? 1 : 0;
+              $winner = $winner_index;
+              break;
+            }
+          }
+        }
+
+        if (preg_match_all('/<span[^>]*class="name"[^>]*>([^<]*)/', $html_slice_tmp, $names)) {
+
+          if (count($names[1]) == 2) {
+            $name1 = trim($names[1][0]);
+            $name2 = trim($names[1][1]);
+          } else if (count($names[1]) == 4) {
+            $name1 = trim($names[1][0]);
+            $name2 = trim($names[1][3]);
+          }
+
+          foreach (array(1, 2) as $name_index) {
+            $name_var = "name" . $name_index;
+            $id_var = "id" . $name_index;
+            if (empty($$name_var)) {
+              $$name_var = EMPTY_NAME;
+            } else if ($$name_var != 'TBD') {
+              foreach ($players as $i => $p) {
+                if ($p['name'] == $$name_var) {
+                  $$id_var = $i;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        set_value($score1, $offset, '/class="brkts-matchlist-score[^"]*"[^>]*>[\s]*([\d]+)/', $html_slice_tmp);
+
+        set_value($score2, $offset, '/class="brkts-matchlist-score[^"]*"[^>]*>[\s]*([\d]+)/', $html_slice_tmp);
+
+        // BO1 situation, no scores, just winner
+        if (strlen($score1) == 0 && strlen($score2) == 0 && 0 < strlen($winner)) {
+          $score1 = ($winner === 0) ? 1 : 0;
+          $score2 = ($winner === 1) ? 1 : 0;
+        }
+
+        if ($group_finished && strlen($winner) == 0) $group_finished = false;
+
+        $match = array(
+          'player1' => $id1,
+          'player2' => $id2,
+          'score1' => $score1,
+          'score2' => $score2,
+          'winner' => $winner
+        );
+        // debug($match);
+
+        $matches[] = $match;
+      }
+    }
+
 
     // Check if the group belongs to the next group stage
     if (!empty($groups) && !empty($stage_offsets) && isset($stage_offsets[$stage + 1]) && $stage_offsets[$stage + 1] < $offsets[$k]) $stage++;
