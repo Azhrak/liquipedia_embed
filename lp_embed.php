@@ -1417,7 +1417,7 @@ function parseBracketPlayers($html)
     $score = (isset($hit[1])) ? $hit[1] : $score;
 
     if ($country_short == 'uk') $country_short = 'gb';
-    if ($name == 'TBD') $name = EMPTY_NAME;
+    if ($name == 'TBD' || $name == '&nbsp;' || $name == '&#160;') $name = EMPTY_NAME;
 
     $player = array(
       'name' => $name,
