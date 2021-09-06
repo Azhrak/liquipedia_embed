@@ -480,7 +480,6 @@ function parse_brackets($html)
     $offsets[] = $matches[0][1];
   }
 
-
   for ($k = 0; $k < count($offsets); $k++) {
 
     $offset_start = $offsets[$k];
@@ -491,229 +490,83 @@ function parse_brackets($html)
     }
 
     $bracket_finished = true;
+    $players = $lb_rounds = array();
+    $winner_count = 0;
 
     if (preg_match('/div class="brkts-round-body[" ]/', $html_slice)) { // Brkts bracket format
-      // TODO parsing
-      return array();
+      $bracketPlayers = parseBracketPlayers($html_slice);
+      $players = $bracketPlayers['players'];
+      $winner_count = $bracketPlayers['winner_count'];
     } else if (preg_match('/div class="bracket-column[" ]/', $html_slice)) { // Bracket format with DIVs
+      $bracketPlayers = parseBracketPlayersOld($html_slice);
+      $players = $bracketPlayers['players'];
+      $winner_count = $bracketPlayers['winner_count'];
+    }
 
-      $pattern = '/bracket-cell-[^>]+>[\s\S]*?bracket-score[^>]+>[^<]*/i';
-      preg_match_all($pattern, $html_slice, $matches);
-      // debug($matches);
+    $players_count = count($players);
+    if ($players_count < 0) {
+      return array();
+    }
 
-      $players = $rounds = $lb_rounds = $bracket = array();
-      $winner_count = 0;
-      for ($i = 0; $i < count($matches[0]); $i++) {
-        $match = $matches[0][$i];
+    $bronze_match = array();
+    $lb_players = array();
+    $grand_final = array();
 
-        $country = '';
-        $country_short = '';
-        $race = '';
-        $name = EMPTY_NAME;
-        $score = '';
-        $winner = false;
+    if ($max_round_of = double_elim_max_round_of($players_count / 2)) {
+      $lb_max_round_of = $max_round_of / 2;
+      $lb_players = array_splice($players, $players_count / 2);
+      $gf_players = array_splice($lb_players, -2);
+      $grand_final = array('player1' => $gf_players[0], 'player2' => $gf_players[1]);
+    } else if (count($players) % 8 == 0) { // bronze match
+      $max_round_of = (count($players) / 2);
+      $bronze_players = array_splice($players, -2);
+      $bronze_match = array('player1' => $bronze_players[0], 'player2' => $bronze_players[1]);
+    } else {
+      $max_round_of = ($players_count / 2) + 1;
+    }
 
-        preg_match('/background:rgb\(([^,]+),\s*([^,]+),\s*([^\)]+)/', $match, $hit);
-        if (count($hit) > 2) {
-          $colors = $hit[1] . ',' . $hit[2] . ',' . $hit[3];
-          switch ($colors) {
-            case '251,223,223':
-              $race = 'Zerg';
-              break;
-            case '222,227,239':
-              $race = 'Terran';
-              break;
-            case '221,244,221':
-              $race = 'Protoss';
-              break;
-          }
-          if ($hit[1] == 'DDDDDD') $name = BYE_NAME;
-        }
+    $bracket_finished = ($bracket_finished && $players_count / 2 <= $winner_count);
 
-        preg_match('/src="[^"]+?\/([\w]{2})(?:_hd)\.\w{3}"/', $match, $hit);
-        $country_short = (isset($hit[1])) ? trim(strtolower($hit[1])) : $country_short;
-        preg_match('/title="([^"]+)"/', $match, $hit);
-        $country = (isset($hit[1])) ? trim($hit[1]) : $country;
-        if (preg_match('/font-weight:bold/', $match)) {
-          $winner = true;
-          $winner_count++;
-        }
-        preg_match('/<span[^>]+>([^<]+)/', $match, $hit);
-        $name = (isset($hit[1]) && !empty($hit[1])) ? trim($hit[1]) : $name;
-        preg_match('/bracket-score[^>]+>([\d]+)/', $match, $hit);
-        $score = (isset($hit[1])) ? $hit[1] : $score;
+    $round_of = $max_round_of;
+    $round_counter = 0;
+    $start_match = 0;
 
-        if ($country_short == 'uk') $country_short = 'gb';
-        if ($name == 'TBD') $name = EMPTY_NAME;
-
-        $player = array(
-          'name' => $name,
-          'race' => $race,
-          'score' => $score,
-          'country' => $country,
-          'country_short' => $country_short,
-          'winner' => $winner
-        );
-        $players[] = $player;
-      }
-      // debug($players);
-      // debug($scores);
-
-      $players_count = count($players);
-      $bronze_match = array();
-      $lb_players = array();
-      $grand_final = array();
-
-      if ($max_round_of = double_elim_max_round_of($players_count / 2)) {
-        $lb_max_round_of = $max_round_of / 2;
-        $lb_players = array_splice($players, $players_count / 2);
-        $gf_players = array_splice($lb_players, -2);
-        $grand_final = array('player1' => $gf_players[0], 'player2' => $gf_players[1]);
-      } else if (count($players) % 8 == 0) { // bronze match
-        $max_round_of = (count($players) / 2);
-        $bronze_players = array_splice($players, -2);
-        $bronze_match = array('player1' => $bronze_players[0], 'player2' => $bronze_players[1]);
-      } else {
-        $max_round_of = ($players_count / 2) + 1;
-      }
-
-      $bracket_finished = ($bracket_finished && $players_count / 2 <= $winner_count);
-
-      $round_of = $max_round_of;
-      $round_counter = 0;
-      $start_match = 0;
-
-      // skip players until first 2^N round is found
-      if (!preg_match("/^\d+$/", log($round_of, 2))) {
-        if ($round_of != 12) { //ro12 is an exception for now
-          $round_of = pow(2, floor(log($round_of, 2)));
-          $start_match = ($max_round_of - $round_of) * 2;
-        }
-      }
-
-      for ($i = $start_match; $i < count($players) - 1; $i += 2) {
-        $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i + 1]);
-        $round_counter += 2;
-        if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
-          $round_of = pow(2, ceil(log($round_of, 2))) / 2;
-          $round_counter = 0;
-        }
-      }
-
-      if ($lb_players) {
-        $round_of = $lb_max_round_of;
-        $stage = 1;
-        for ($i = 0; $i < count($lb_players) - 1; $i += 2) {
-          $lb_rounds[$round_of][$stage][] = array('player1' => $lb_players[$i], 'player2' => $lb_players[$i + 1]);
-          $round_counter += 2;
-          if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
-            if ($stage == 2) {
-              $round_of = pow(2, ceil(log($round_of, 2))) / 2;
-              $round_counter = 0;
-              $stage = 1;
-            } else {
-              $stage = 2;
-              $round_counter = 0;
-            }
-          }
-        }
-      }
-    } else { // Old bracket format, with TABLE
-
-      $pattern = '/bgcolor="#?(F2B8B8|B8F2B8|B8B8F2|DDDDDD|F2F2F2|)" rowspan="2"[^>]*>([^<]*)(?:(?:<[^>]*>){3}&#160;(?:<b>)?[^<]+)?/i';
-      preg_match_all($pattern, $html_slice, $matches);
-      // debug($matches);
-
-      $players = $scores = $rounds = $bracket = array();
-      for ($i = 0; $i < count($matches[0]); $i++) {
-        $match = $matches[0][$i];
-        $color = $matches[1][$i];
-
-        if (strtoupper($color) == 'F2F2F2') { // score cell
-          $score = '';
-          preg_match('/>[\s]*([\d]+)[\s]*$/', $match, $hit);
-          $score = (isset($hit[1])) ? $hit[1] : $score;
-          $scores[] = $score;
-          if ($bracket_finished && $score == '') $bracket_finished = false;
-        } else { // player cell
-          $country = '';
-          $country_short = '';
-          $race = '';
-          $name = EMPTY_NAME;
-          $winner = false;
-
-          switch ($color) {
-            case 'F2B8B8':
-              $race = 'Zerg';
-              break;
-            case 'B8B8F2':
-              $race = 'Terran';
-              break;
-            case 'B8F2B8':
-              $race = 'Protoss';
-              break;
-          }
-          if ($color == 'DDDDDD') $name = BYE_NAME;
-          if (!empty($race)) {
-            preg_match('/src="[^"]+?\/([\w]{2})\.[\w]{3,4}"/', $match, $hit);
-            $country_short = (isset($hit[1])) ? trim(strtolower($hit[1])) : $country_short;
-            preg_match('/title="([^"]+)"/', $match, $hit);
-            $country = (isset($hit[1])) ? trim($hit[1]) : $country;
-            preg_match('/(?:&#160;)+(?:(<b>))?([^<]+)[\s]*$/', $match, $hit);
-            $winner = (isset($hit[1]) && !empty($hit[1]));
-            $name = (isset($hit[2]) && !empty($hit[2])) ? trim($hit[2]) : $name;
-          }
-
-          if ($country_short == 'uk') $country_short = 'gb';
-          if ($name == 'TBD') $name = EMPTY_NAME;
-
-          $player = array(
-            'name' => $name,
-            'race' => $race,
-            'country' => $country,
-            'country_short' => $country_short,
-            'winner' => $winner
-          );
-          $players[] = $player;
-          if ($bracket_finished && $name == EMPTY_NAME) $bracket_finished = false;
-        }
-      }
-      // debug($players);
-      // debug($scores);
-
-      $bronze_match = array();
-      if (count($players) % 8 == 0) { // bronze match
-        $max_round_of = (count($players) / 2);
-        $i = (count($players) / 2) - 1 + floor(count($players) / 3);
-        $player1 = $players[$i];
-        $player2 = $players[$i + 2];
-        $player1['score'] = $scores[$i];
-        $player2['score'] = $scores[$i + 2];
-        unset($players[$i]);
-        unset($players[$i + 2]);
-        unset($scores[$i]);
-        unset($scores[$i + 2]);
-        $players = array_slice($players, 0);
-        $scores = array_slice($scores, 0);
-        $bronze_match = array('player1' => $player1, 'player2' => $player2);
-      } else {
-        $max_round_of = (count($players) / 2) + 1;
-      }
-
-      $start_i = 0;
-      $step = 4;
-      for ($match_count = ($max_round_of / 2); $match_count >= 1; $match_count = $match_count / 2) {
-        for ($i = $start_i; $i < count($players) - 1; $i += $step) {
-          $player1 = $players[$i];
-          $player2 = $players[$i + 1];
-          $player1['score'] = $scores[$i];
-          $player2['score'] = $scores[$i + 1];
-          $rounds[$match_count * 2][] = array('player1' => $player1, 'player2' => $player2);
-        }
-        $start_i = $start_i + ($step / 2);
-        $step *= 2;
+    // skip players until first 2^N round is found
+    if (!preg_match("/^\d+$/", log($round_of, 2))) {
+      if ($round_of != 12) { //ro12 is an exception for now
+        $round_of = pow(2, floor(log($round_of, 2)));
+        $start_match = ($max_round_of - $round_of) * 2;
       }
     }
+
+    for ($i = $start_match; $i < count($players) - 1; $i += 2) {
+      $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i + 1]);
+      $round_counter += 2;
+      if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
+        $round_of = pow(2, ceil(log($round_of, 2))) / 2;
+        $round_counter = 0;
+      }
+    }
+
+    if ($lb_players) {
+      $round_of = $lb_max_round_of;
+      $stage = 1;
+      for ($i = 0; $i < count($lb_players) - 1; $i += 2) {
+        $lb_rounds[$round_of][$stage][] = array('player1' => $lb_players[$i], 'player2' => $lb_players[$i + 1]);
+        $round_counter += 2;
+        if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
+          if ($stage == 2) {
+            $round_of = pow(2, ceil(log($round_of, 2))) / 2;
+            $round_counter = 0;
+            $stage = 1;
+          } else {
+            $stage = 2;
+            $round_counter = 0;
+          }
+        }
+      }
+    }
+
 
     if (!empty($bronze_match)) $rounds['bronze'][] = $bronze_match;
     if (!empty($grand_final)) $rounds['grand_final'][] = $grand_final;
@@ -1528,4 +1381,118 @@ function double_elim_max_round_of($match_count)
     }
   }
   return 0;
+}
+
+function parseBracketPlayers($html)
+{
+  $pattern = '/brkts-opponent-entry[ "]{1}[^>]+>[\s\S]*?brkts-opponent-score-inner[^>]+>[\s\S]*?<\/div>/i';
+  preg_match_all($pattern, $html, $matches);
+  // debug($matches);
+
+  $players = array();
+  $winner_count = 0;
+  for ($i = 0; $i < count($matches[0]); $i++) {
+    $match = $matches[0][$i];
+
+    $country = '';
+    $country_short = '';
+    $race = '';
+    $name = EMPTY_NAME;
+    $score = '';
+    $winner = false;
+
+    preg_match('/brkts-opponent-entry-left [^"]*(Terran|Protoss|Zerg|Random)/i', $match, $hit);
+    $race = isset($hit[1]) ? $hit[1] : $race;
+    preg_match('/src="[^"]+?\/([\w]{2})(?:_hd)\.\w{3}"/', $match, $hit);
+    $country_short = (isset($hit[1])) ? trim(strtolower($hit[1])) : $country_short;
+    preg_match('/<img [^>]*?title="([^"]+)"/', $match, $hit);
+    $country = (isset($hit[1])) ? trim($hit[1]) : $country;
+    if (preg_match('/brkts-opponent-win/', $match)) {
+      $winner = true;
+      $winner_count++;
+    }
+    preg_match('/<span class="name"[^>]*>([^<]+)/', $match, $hit);
+    $name = (isset($hit[1]) && !empty($hit[1])) ? trim($hit[1]) : $name;
+    preg_match('/brkts-opponent-score-inner[^>]+>(?:<b>)?([\d]+)/', $match, $hit);
+    $score = (isset($hit[1])) ? $hit[1] : $score;
+
+    if ($country_short == 'uk') $country_short = 'gb';
+    if ($name == 'TBD') $name = EMPTY_NAME;
+
+    $player = array(
+      'name' => $name,
+      'race' => $race,
+      'score' => $score,
+      'country' => $country,
+      'country_short' => $country_short,
+      'winner' => $winner
+    );
+    $players[] = $player;
+  }
+
+  return array('players' => $players, 'winner_count' => $winner_count);
+}
+
+function parseBracketPlayersOld($html)
+{
+  $pattern = '/bracket-cell-[^>]+>[\s\S]*?bracket-score[^>]+>[^<]*/i';
+  preg_match_all($pattern, $html, $matches);
+  // debug($matches);
+
+  $players =  array();
+  $winner_count = 0;
+  for ($i = 0; $i < count($matches[0]); $i++) {
+    $match = $matches[0][$i];
+
+    $country = '';
+    $country_short = '';
+    $race = '';
+    $name = EMPTY_NAME;
+    $score = '';
+    $winner = false;
+
+    preg_match('/background:rgb\(([^,]+),\s*([^,]+),\s*([^\)]+)/', $match, $hit);
+    if (count($hit) > 2) {
+      $colors = $hit[1] . ',' . $hit[2] . ',' . $hit[3];
+      switch ($colors) {
+        case '251,223,223':
+          $race = 'Zerg';
+          break;
+        case '222,227,239':
+          $race = 'Terran';
+          break;
+        case '221,244,221':
+          $race = 'Protoss';
+          break;
+      }
+      if ($hit[1] == 'DDDDDD') $name = BYE_NAME;
+    }
+
+    preg_match('/src="[^"]+?\/([\w]{2})(?:_hd)\.\w{3}"/', $match, $hit);
+    $country_short = (isset($hit[1])) ? trim(strtolower($hit[1])) : $country_short;
+    preg_match('/title="([^"]+)"/', $match, $hit);
+    $country = (isset($hit[1])) ? trim($hit[1]) : $country;
+    if (preg_match('/font-weight:bold/', $match)) {
+      $winner = true;
+      $winner_count++;
+    }
+    preg_match('/<span[^>]+>([^<]+)/', $match, $hit);
+    $name = (isset($hit[1]) && !empty($hit[1])) ? trim($hit[1]) : $name;
+    preg_match('/bracket-score[^>]+>([\d]+)/', $match, $hit);
+    $score = (isset($hit[1])) ? $hit[1] : $score;
+
+    if ($country_short == 'uk') $country_short = 'gb';
+    if ($name == 'TBD') $name = EMPTY_NAME;
+
+    $player = array(
+      'name' => $name,
+      'race' => $race,
+      'score' => $score,
+      'country' => $country,
+      'country_short' => $country_short,
+      'winner' => $winner
+    );
+    $players[] = $player;
+  }
+  return array('players' => $players, 'winner_count' => $winner_count);
 }
