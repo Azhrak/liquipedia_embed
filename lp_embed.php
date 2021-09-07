@@ -654,12 +654,12 @@ function parse_groups($html)
     preg_match('/<th colspan="\d"[^>]*>.*Group (\w{1,2})\s*/', $html_slice, $hit);
     $group_name = (isset($hit[1])) ? trim($hit[1]) : $group_name;
 
-    preg_match('/class="timer-object"[^>]*>([^<]+)<[^>]+UTC(.\d+)/', $html_slice, $hit);
+    preg_match('/class="timer-object"[^>]*?>([^<]+)/', $html_slice, $hit);
     if (isset($hit[1])) {
       $group_time = trim($hit[1]);
-      $group_time = $group_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $group_time));
-      $utc_diff = (date("I")) ? TIMEZONE + 1 - $hit[2] : TIMEZONE - $hit[2];
-      $group_time = strtotime($utc_diff . " hour", $group_time);
+      $group_time_local = strtotime(preg_replace('/[^\d\w,: ]+/', ' ', $group_time));
+      $utc_diff = (date("I")) ? TIMEZONE + 1 : TIMEZONE;
+      $group_time = strtotime($utc_diff . " hour", $group_time_local);
     }
 
     // Separate players and matches tables to make parsing easy
