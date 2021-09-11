@@ -489,93 +489,19 @@ function parse_brackets($html)
       $html_slice = substr($html, $offset_start);
     }
 
-    $bracket_finished = true;
-    $players = $lb_rounds = array();
-    $winner_count = 0;
+    $bracket = array();
 
     if (preg_match('/div class="brkts-round-body[" ]/', $html_slice)) { // Brkts bracket format
       $bracketPlayers = parseBracketPlayers($html_slice);
       $players = $bracketPlayers['players'];
       $winner_count = $bracketPlayers['winner_count'];
+      $bracket = createBracket($players, $winner_count);
     } else if (preg_match('/div class="bracket-column[" ]/', $html_slice)) { // Bracket format with DIVs
       $bracketPlayers = parseBracketPlayersOld($html_slice);
       $players = $bracketPlayers['players'];
       $winner_count = $bracketPlayers['winner_count'];
+      $bracket = createBracketOld($players, $winner_count);
     }
-
-    $players_count = count($players);
-    if ($players_count < 0) {
-      return array();
-    }
-
-    $bronze_match = array();
-    $lb_players = array();
-    $grand_final = array();
-
-    if ($max_round_of = double_elim_max_round_of($players_count / 2)) {
-      $lb_max_round_of = $max_round_of / 2;
-      $lb_players = array_splice($players, $players_count / 2);
-      $gf_players = array_splice($lb_players, -2);
-      $grand_final = array('player1' => $gf_players[0], 'player2' => $gf_players[1]);
-    } else if (count($players) % 8 == 0) { // bronze match
-      $max_round_of = (count($players) / 2);
-      $bronze_players = array_splice($players, -2);
-      $bronze_match = array('player1' => $bronze_players[0], 'player2' => $bronze_players[1]);
-    } else {
-      $max_round_of = ($players_count / 2) + 1;
-    }
-
-    $bracket_finished = ($bracket_finished && $players_count / 2 <= $winner_count);
-
-    $round_of = $max_round_of;
-    $round_counter = 0;
-    $start_match = 0;
-
-    // skip players until first 2^N round is found
-    if (!preg_match("/^\d+$/", log($round_of, 2))) {
-      if ($round_of != 12) { //ro12 is an exception for now
-        $round_of = pow(2, floor(log($round_of, 2)));
-        $start_match = ($max_round_of - $round_of) * 2;
-      }
-    }
-
-    for ($i = $start_match; $i < count($players) - 1; $i += 2) {
-      $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i + 1]);
-      $round_counter += 2;
-      if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
-        $round_of = pow(2, ceil(log($round_of, 2))) / 2;
-        $round_counter = 0;
-      }
-    }
-
-    if ($lb_players) {
-      $round_of = $lb_max_round_of;
-      $stage = 1;
-      for ($i = 0; $i < count($lb_players) - 1; $i += 2) {
-        $lb_rounds[$round_of][$stage][] = array('player1' => $lb_players[$i], 'player2' => $lb_players[$i + 1]);
-        $round_counter += 2;
-        if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
-          if ($stage == 2) {
-            $round_of = pow(2, ceil(log($round_of, 2))) / 2;
-            $round_counter = 0;
-            $stage = 1;
-          } else {
-            $stage = 2;
-            $round_counter = 0;
-          }
-        }
-      }
-    }
-
-
-    if (!empty($bronze_match)) $rounds['bronze'][] = $bronze_match;
-    if (!empty($grand_final)) $rounds['grand_final'][] = $grand_final;
-
-    $bracket = array(
-      'rounds' => $rounds,
-      'lb_rounds' => $lb_rounds,
-      'finished' =>  $bracket_finished
-    );
 
     // debug($bracket);
 
@@ -1433,6 +1359,113 @@ function parseBracketPlayers($html)
   return array('players' => $players, 'winner_count' => $winner_count);
 }
 
+function createBracket($players, $winner_count)
+{
+  $players_count = count($players);
+  if ($players_count < 0) {
+    return array();
+  }
+
+  $bracket_finished = true;
+  $lb_rounds = array();
+
+  $bronze_match = array();
+  $lb_players = array();
+  $grand_final = array();
+
+  if ($max_round_of = double_elim_max_round_of($players_count / 2)) {
+    $lb_max_round_of = $max_round_of / 2;
+    $lb_players = array_splice($players, $players_count / 2);
+    $gf_players = array_splice($lb_players, -2);
+    $grand_final = array('player1' => $gf_players[0], 'player2' => $gf_players[1]);
+  } else if (count($players) % 8 == 0) { // bronze match
+    $max_round_of = (count($players) / 2);
+    $bronze_players = array_splice($players, -2);
+    $bronze_match = array('player1' => $bronze_players[0], 'player2' => $bronze_players[1]);
+  } else {
+    $max_round_of = ($players_count / 2) + 1;
+  }
+
+  $bracket_finished = ($bracket_finished && $players_count / 2 <= $winner_count);
+
+  $round_of = $max_round_of;
+  $start_match = 0;
+
+  // skip players until first 2^N round is found
+  if (!preg_match("/^\d+$/", log($round_of, 2))) {
+    if ($round_of != 12) { //ro12 is an exception for now
+      $round_of = pow(2, floor(log($round_of, 2)));
+      $start_match = ($max_round_of - $round_of) * 2;
+    }
+  }
+
+  /*
+  matches order in bracket tree:
+  1
+      3
+  2
+          7
+  4
+      6
+  5
+  */
+
+  $match_counter = 0;
+  $reset_counter = 0;
+  for ($i = $start_match; $i < count($players) - 1; $i += 2) {
+    if ($match_counter == 2) {
+      $round_of /= 2;
+      $match_counter = -1;
+    } else if ($match_counter == 0 && $round_of < $max_round_of) {
+      if ($reset_counter == 1) {
+        $round_of /= 2;
+        $match_counter = 0;
+        $reset_counter++;
+      } else if ($reset_counter == 3) {
+        $match_counter = 0;
+        $reset_counter = 0;
+        $round_of *= 4;
+      } else {
+        $round_of *= 2;
+        $reset_counter++;
+      }
+    }
+    $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i + 1]);
+    $match_counter++;
+  }
+
+  if ($lb_players) {
+    $round_counter = 0;
+    $round_of = $lb_max_round_of;
+    $stage = 1;
+    for ($i = 0; $i < count($lb_players) - 1; $i += 2) {
+      $lb_rounds[$round_of][$stage][] = array('player1' => $lb_players[$i], 'player2' => $lb_players[$i + 1]);
+      $round_counter += 2;
+      if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
+        if ($stage == 2) {
+          $round_of = pow(2, ceil(log($round_of, 2))) / 2;
+          $round_counter = 0;
+          $stage = 1;
+        } else {
+          $stage = 2;
+          $round_counter = 0;
+        }
+      }
+    }
+  }
+
+  if (!empty($bronze_match)) $rounds['bronze'][] = $bronze_match;
+  if (!empty($grand_final)) $rounds['grand_final'][] = $grand_final;
+
+  $bracket = array(
+    'rounds' => $rounds,
+    'lb_rounds' => $lb_rounds,
+    'finished' =>  $bracket_finished
+  );
+
+  return $bracket;
+}
+
 function parseBracketPlayersOld($html)
 {
   $pattern = '/bracket-cell-[^>]+>[\s\S]*?bracket-score[^>]+>[^<]*/i';
@@ -1495,4 +1528,85 @@ function parseBracketPlayersOld($html)
     $players[] = $player;
   }
   return array('players' => $players, 'winner_count' => $winner_count);
+}
+
+function createBracketOld($players, $winner_count = 0)
+{
+  $players_count = count($players);
+  if ($players_count < 0) {
+    return array();
+  }
+
+  $bracket_finished = true;
+  $lb_rounds = array();
+
+  $bronze_match = array();
+  $lb_players = array();
+  $grand_final = array();
+
+  if ($max_round_of = double_elim_max_round_of($players_count / 2)) {
+    $lb_max_round_of = $max_round_of / 2;
+    $lb_players = array_splice($players, $players_count / 2);
+    $gf_players = array_splice($lb_players, -2);
+    $grand_final = array('player1' => $gf_players[0], 'player2' => $gf_players[1]);
+  } else if (count($players) % 8 == 0) { // bronze match
+    $max_round_of = (count($players) / 2);
+    $bronze_players = array_splice($players, -2);
+    $bronze_match = array('player1' => $bronze_players[0], 'player2' => $bronze_players[1]);
+  } else {
+    $max_round_of = ($players_count / 2) + 1;
+  }
+
+  $bracket_finished = ($bracket_finished && $players_count / 2 <= $winner_count);
+
+  $round_of = $max_round_of;
+  $round_counter = 0;
+  $start_match = 0;
+
+  // skip players until first 2^N round is found
+  if (!preg_match("/^\d+$/", log($round_of, 2))) {
+    if ($round_of != 12) { //ro12 is an exception for now
+      $round_of = pow(2, floor(log($round_of, 2)));
+      $start_match = ($max_round_of - $round_of) * 2;
+    }
+  }
+
+  for ($i = $start_match; $i < count($players) - 1; $i += 2) {
+    $rounds[$round_of][] = array('player1' => $players[$i], 'player2' => $players[$i + 1]);
+    $round_counter += 2;
+    if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
+      $round_of = pow(2, ceil(log($round_of, 2))) / 2;
+      $round_counter = 0;
+    }
+  }
+
+  if ($lb_players) {
+    $round_of = $lb_max_round_of;
+    $stage = 1;
+    for ($i = 0; $i < count($lb_players) - 1; $i += 2) {
+      $lb_rounds[$round_of][$stage][] = array('player1' => $lb_players[$i], 'player2' => $lb_players[$i + 1]);
+      $round_counter += 2;
+      if (pow(2, floor(log($round_of, 2))) - 1 <= $round_counter) {
+        if ($stage == 2) {
+          $round_of = pow(2, ceil(log($round_of, 2))) / 2;
+          $round_counter = 0;
+          $stage = 1;
+        } else {
+          $stage = 2;
+          $round_counter = 0;
+        }
+      }
+    }
+  }
+
+  if (!empty($bronze_match)) $rounds['bronze'][] = $bronze_match;
+  if (!empty($grand_final)) $rounds['grand_final'][] = $grand_final;
+
+  $bracket = array(
+    'rounds' => $rounds,
+    'lb_rounds' => $lb_rounds,
+    'finished' =>  $bracket_finished
+  );
+
+  return $bracket;
 }
